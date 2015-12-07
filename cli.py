@@ -17,6 +17,7 @@ import click
 _APP_NAME = 'tutamen-cli'
 _PATH_SERVER_CONF = os.path.join(click.get_app_dir(_APP_NAME), 'servers')
 
+_AUTHORIZATIONS_KEY = "authorizations"
 _COLLECTIONS_KEY = "collections"
 _SECRETS_KEY = "secrets"
 
@@ -75,8 +76,8 @@ def secrets(obj):
 @click.pass_obj
 def secrets_get(obj, col_uid, sec_uid):
 
-    url = "{}/{}/{}/{}/{}/".format(obj['url'], _COLLECTIONS_KEY, str(col_uid),
-                                   _SECRETS_KEY, str(sec_uid))
+    url = "{}/{}/{}/{}/{}/version/latest/".format(obj['url'], _COLLECTIONS_KEY, str(col_uid),
+                                                  _SECRETS_KEY, str(sec_uid))
     res = requests.get(url, verify=obj['path_ca'],
                        cert=(obj['path_cert'], obj['path_key']))
     res.raise_for_status()
