@@ -17,6 +17,9 @@ import click
 _APP_NAME = 'tutamen-cli'
 _PATH_SERVER_CONF = os.path.join(click.get_app_dir(_APP_NAME), 'servers')
 
+_COLLECTIONS_KEY = "collections"
+_SECRETS_KEY = "secrets"
+
 
 ### CLI Root ###
 
@@ -40,36 +43,58 @@ def cli(ctx, url, cert, key, ca):
     ctx.obj['path_ca'] = ca
 
 
-### Secret Storage Commands ###
+### Collection Storage Commands ###
 
-@cli.group(name='secrets')
+@cli.group(name=_COLLECTIONS_KEY)
 @click.pass_obj
-def secret(obj):
+def collections(obj):
     pass
 
-@secret.command(name='get')
-@click.argument('uid', type=click.UUID)
+@collections.command(name='create')
+@click.argument('metadata', type=click.STRING)
 @click.pass_obj
-def secret_get(obj, uid):
+def collections_create(obj, metadata):
 
-    url = "{}/secrets/{}/".format(obj['url'], str(uid))
+    url = "{}/{}/".format(obj['url'], _COLLECTIONS_KEY)
+    json_out = {'metadata': metadata}
+    res = requests.post(url, json=json_out, verify=obj['path_ca'],
+                        cert=(obj['path_cert'], obj['path_key']))
+    res.raise_for_status()
+    click.echo(res.json())
+
+### Secret Storage Commands ###
+
+@cli.group(name=_SECRETS_KEY)
+@click.pass_obj
+def secrets(obj):
+    pass
+
+@secrets.command(name='get')
+@click.argument('col_uid', type=click.UUID)
+@click.argument('sec_uid', type=click.UUID)
+@click.pass_obj
+def secrets_get(obj, col_uid, sec_uid):
+
+    url = "{}/{}/{}/{}/{}/".format(obj['url'], _COLLECTIONS_KEY, str(col_uid),
+                                   _SECRETS_KEY, str(sec_uid))
     res = requests.get(url, verify=obj['path_ca'],
                        cert=(obj['path_cert'], obj['path_key']))
     res.raise_for_status()
-    click.echo(res.json()['data'])
+    click.echo(res.json())
 
-@secret.command(name='create')
+@secrets.command(name='create')
+@click.argument('col_uid', type=click.UUID)
 @click.argument('data', type=click.STRING)
+@click.argument('metadata', type=click.STRING)
 @click.pass_obj
-def secret_create(obj, data):
+def secrets_create(obj, col_uid, data, metadata):
 
-    url = "{}/secrets/".format(obj['url'])
-    jsn = {'data': data}
-    click.echo(jsn)
-    res = requests.post(url, json=jsn, verify=obj['path_ca'],
+    url = "{}/{}/{}/{}/".format(obj['url'], _COLLECTIONS_KEY, str(col_uid), _SECRETS_KEY)
+    json_out = {'data': data, 'metadata': metadata}
+    res = requests.post(url, json=json_out, verify=obj['path_ca'],
                         cert=(obj['path_cert'], obj['path_key']))
     res.raise_for_status()
-    click.echo(res.json()['secrets'][0])
+    click.echo(res.json())
 
 
 ### Main ###
