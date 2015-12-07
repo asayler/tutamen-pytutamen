@@ -70,14 +70,14 @@ def collections_create(obj, metadata):
 def secrets(obj):
     pass
 
-@secrets.command(name='get')
+@secrets.command(name='data')
 @click.argument('col_uid', type=click.UUID)
 @click.argument('sec_uid', type=click.UUID)
 @click.pass_obj
-def secrets_get(obj, col_uid, sec_uid):
+def secrets_get_data(obj, col_uid, sec_uid):
 
-    url = "{}/{}/{}/{}/{}/version/latest/".format(obj['url'], _COLLECTIONS_KEY, str(col_uid),
-                                                  _SECRETS_KEY, str(sec_uid))
+    url = "{}/{}/{}/{}/{}/versions/latest/".format(obj['url'], _COLLECTIONS_KEY, str(col_uid),
+                                                   _SECRETS_KEY, str(sec_uid))
     res = requests.get(url, verify=obj['path_ca'],
                        cert=(obj['path_cert'], obj['path_key']))
     res.raise_for_status()
