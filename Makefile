@@ -3,8 +3,10 @@
 
 ECHO = @echo
 
-PYTHON = python3
-PIP = pip3
+PYTHON2 = python2
+PIP2 = pip2
+PYTHON3 = python3
+PIP3 = pip3
 
 REQUIRMENTS = requirments.txt
 
@@ -15,11 +17,17 @@ UNITTEST_PATTERN = '*_test.py'
 all:
 	$(ECHO) "This is a python project; nothing to build!"
 
-reqs: $(REQUIRMENTS)
-	$(PIP) install -r $(REQUIRMENTS) -U
+reqs2:
+	$(PIP2) install -r $(REQUIRMENTS) -U
 
-test:
-	$(PYTHON) -m unittest discover -v -p $(UNITTEST_PATTERN)
+reqs3:
+	$(PIP3) install -r $(REQUIRMENTS) -U
+
+test2:
+	$(PYTHON2) -m unittest discover -v -p $(UNITTEST_PATTERN)
+
+test3:
+	$(PYTHON3) -m unittest discover -v -p $(UNITTEST_PATTERN)
 
 clean:
 	$(RM) *.pyc
