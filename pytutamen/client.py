@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+
+
+# Andy Sayler
+# 2015
+# pytutamen Package
+# Tutamen Client Library
+
+
 ### Imports ###
+
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 
 import requests
 
@@ -23,10 +40,12 @@ PERM_SRV_COL_CREATE = "srv-col-create"
 PERM_COL_CREATE = "col-create"
 PERM_COL_READ = "col-read"
 
-### Excpetions ###
+
+### Exceptions ###
 
 class ClientException(Exception):
     pass
+
 
 ### Objects ###
 
