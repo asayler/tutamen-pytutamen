@@ -36,13 +36,11 @@ class Client(object):
 
         # Get Args
         if not url_server:
-            raise(ClientExcpetion("url_server required"))
+            raise(ClientException("url_server required"))
         if not path_cert:
-            raise(ClientExcpetion("path_cert required"))
+            raise(ClientException("path_cert required"))
         if not path_key:
-            raise(ClientExcpetion("path_key required"))
-        if not path_ca:
-            raise(ClientExcpetion("path_ca required"))
+            raise(ClientException("path_key required"))
 
         # Call Parent
         super().__init__()
