@@ -16,6 +16,9 @@ _KEY_COL_SEC = "secrets"
 _VAL_AUTH_STATUS_PENDING = 'pending'
 _VAL_AUTH_STATUS_GRANTED = 'granted'
 
+_API_BASE = 'api'
+_API_VERSION = 'v1'
+
 PERM_SRV_COL_CREATE = "srv-col-create"
 PERM_COL_CREATE = "col-create"
 PERM_COL_READ = "col-read"
@@ -75,30 +78,38 @@ class Client(object):
             auth = None
         return auth
 
+    @property
+    def url_srv(self):
+        return self._url_server
+
+    @property
+    def url_api(self):
+        return "{}/{}/{}".format(self.url_srv, _API_BASE, _API_VERSION)
+
     def http_post(self, endpoint, json=None, token=None):
         auth = self._token_to_auth(token)
-        url = "{:s}/{:s}/".format(self._url_server, endpoint)
+        url = "{:s}/{:s}/".format(self.url_api, endpoint)
         res = self._session.post(url, json=json, auth=auth)
         res.raise_for_status()
         return res.json()
 
     def http_put(self, endpoint, json=None, token=None):
         auth = self._token_to_auth(token)
-        url = "{:s}/{:s}/".format(self._url_server, endpoint)
+        url = "{:s}/{:s}/".format(self.url_api, endpoint)
         res = self._session.put(url, json=json, auth=auth)
         res.raise_for_status()
         return res.json()
 
     def http_get(self, endpoint=None, token=None):
         auth = self._token_to_auth(token)
-        url = "{:s}/{:s}/".format(self._url_server, endpoint)
+        url = "{:s}/{:s}/".format(self.url_api, endpoint)
         res = self._session.get(url, auth=auth)
         res.raise_for_status()
         return res.json()
 
     def http_delete(self, endpoint=None, token=None):
         auth = self._token_to_auth(token)
-        url = "{:s}/{:s}/".format(self._url_server, endpoint)
+        url = "{:s}/{:s}/".format(self.url_api, endpoint)
         res = self._session.delete(url, auth=auth)
         res.raise_for_status()
         return res.json()
