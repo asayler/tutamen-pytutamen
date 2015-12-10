@@ -53,7 +53,10 @@ class Client(object):
 
     def open(self):
         ses = requests.Session()
-        ses.verify = self._path_ca
+        if self._path_ca is not None:
+            ses.verify = self._path_ca
+        else:
+            ses.verify = True
         ses.cert = (self._path_cert, self._path_key)
         self._session = ses
 
