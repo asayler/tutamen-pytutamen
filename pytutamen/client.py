@@ -150,10 +150,10 @@ class ObjectClient(object):
 
 class AuthorizationsClient(ObjectClient):
 
-    def request(self, permission, metadata={}):
+    def request(self, permission, usermetadata={}):
 
         ep = "{}".format(_KEY_AUTH)
-        json_out = {'permission': permission, 'metadata': metadata}
+        json_out = {'permission': permission, 'usermetadata': usermetadata}
         res = self._client.http_post(ep, json=json_out)
         return res[_KEY_AUTH][0]
 
@@ -169,9 +169,9 @@ class AuthorizationsClient(ObjectClient):
         res = self._client.http_get(ep)
         return res[_KEY_AUTH_TOKEN]
 
-    def request_wait(self, permission, metadata={}):
+    def request_wait(self, permission, usermetadata={}):
 
-        ath_uid = self.request(permission, metadata=metadata)
+        ath_uid = self.request(permission, usermetadata=usermetadata)
         status = self.status(ath_uid)
         while (status == _VAL_AUTH_STATUS_PENDING):
             time.sleep(_AUTH_WAIT_SLEEP)
@@ -183,7 +183,7 @@ class AuthorizationsClient(ObjectClient):
 
 class CollectionsClient(ObjectClient):
 
-    def create(self, metadata={}, token=None):
+    def create(self, usermetadata={}, token=None):
 
         if not token:
             a = AuthorizationsClient(self._client)
@@ -192,13 +192,13 @@ class CollectionsClient(ObjectClient):
                 raise ClientException("Authorization Denied")
 
         ep = "{}".format(_KEY_COL)
-        json_out = {'metadata': metadata}
+        json_out = {'usermetadata': usermetadata}
         res = self._client.http_post(ep, json=json_out, token=token)
         return res[_KEY_COL][0]
 
 class SecretsClient(ObjectClient):
 
-    def create(self, col_uid, data, metadata={}, token=None):
+    def create(self, col_uid, data, usermetadata={}, token=None):
 
         if not token:
             a = AuthorizationsClient(self._client)
@@ -207,7 +207,7 @@ class SecretsClient(ObjectClient):
                 raise ClientException("Authorization Denied")
 
         ep = "{}/{}/{}".format(_KEY_COL, col_uid, _KEY_COL_SEC)
-        json_out = {'data': data, 'metadata': metadata}
+        json_out = {'data': data, 'usermetadata': usermetadata}
         res = self._client.http_post(ep, json=json_out, token=token)
         return res[_KEY_COL_SEC][0]
 
