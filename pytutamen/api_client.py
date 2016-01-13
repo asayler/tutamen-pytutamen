@@ -56,10 +56,6 @@ class APIClient(object):
         # Get Args
         if not url_server:
             raise(APIClientException("url_server required"))
-        if not path_cert:
-            raise(APIClientException("path_cert required"))
-        if not path_key:
-            raise(APIClientException("path_key required"))
 
         # Call Parent
         super().__init__()
@@ -72,11 +68,12 @@ class APIClient(object):
 
     def open(self):
         ses = requests.Session()
-        if self._path_ca is not None:
+        if self._path_ca:
             ses.verify = self._path_ca
         else:
             ses.verify = True
-        ses.cert = (self._path_cert, self._path_key)
+        if self._path_cert and self._path_key:
+            ses.cert = (self._path_cert, self._path_key)
         self._session = ses
 
     def close(self):
