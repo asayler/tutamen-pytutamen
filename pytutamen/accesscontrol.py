@@ -37,10 +37,10 @@ class APIACException(api_client.APIClientException):
 
 ### Client Objects ###
 
-class AccountClient(api_client.ObjectClient):
+class BootstrapClient(api_client.ObjectClient):
 
-    def bootstrap(self, account_userdata={}, account_uid=None,
-                  client_userdata={}, client_uid=None, client_csr=None):
+    def account(self, account_userdata={}, account_uid=None,
+                client_userdata={}, client_uid=None, client_csr=None):
 
         if not client_csr:
             raise ValueError("client_csr required")
