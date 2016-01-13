@@ -22,7 +22,7 @@ import requests
 
 ### Constants ###
 
-_AUTH_WAIT_TIME = 0.1
+_AUTH_WAIT_SLEEP = 0.1
 
 _KEY_AUTH = "authorizations"
 _KEY_AUTH_STATUS = "status"
@@ -43,23 +43,23 @@ PERM_COL_READ = "col-read"
 
 ### Exceptions ###
 
-class ClientException(Exception):
+class APIClientException(Exception):
     pass
 
 
 ### Objects ###
 
-class Client(object):
+class APIClient(object):
 
     def __init__(self, url_server=None, path_cert=None, path_key=None, path_ca=None):
 
         # Get Args
         if not url_server:
-            raise(ClientException("url_server required"))
+            raise(APIClientException("url_server required"))
         if not path_cert:
-            raise(ClientException("path_cert required"))
+            raise(APIClientException("path_cert required"))
         if not path_key:
-            raise(ClientException("path_key required"))
+            raise(APIClientException("path_key required"))
 
         # Call Parent
         super().__init__()
@@ -136,42 +136,42 @@ class Client(object):
 
 class ObjectClient(object):
 
-    def __init__(self, client):
+    def __init__(self, apiclient):
 
         # Check Args
-        if not isinstance(client, Client):
-            raise(TypeError("'client' must of an instance of {}".format(Client)))
+        if not isinstance(apiclient, APIClient):
+            raise(TypeError("'apiclient' must of an instance of {}".format(APIClient)))
 
         # Call Parent
         super().__init__()
 
         # Setup Properties
-        self._client = client
+        self._apiclient = apiclient
 
 class AuthorizationsClient(ObjectClient):
 
-    def request(self, permission, usermetadata={}):
+    def request(self, permission, userdata={}):
 
         ep = "{}".format(_KEY_AUTH)
-        json_out = {'permission': permission, 'usermetadata': usermetadata}
-        res = self._client.http_post(ep, json=json_out)
+        json_out = {'permission': permission, 'userdata': userdata}
+        res = self._apiclient.http_post(ep, json=json_out)
         return res[_KEY_AUTH][0]
 
     def status(self, ath_uid):
 
         ep = "{}/{}/{}".format(_KEY_AUTH, ath_uid, _KEY_AUTH_STATUS)
-        res = self._client.http_get(ep)
+        res = self._apiclient.http_get(ep)
         return res[_KEY_AUTH_STATUS]
 
     def token(self, ath_uid):
 
         ep = "{}/{}/{}".format(_KEY_AUTH, ath_uid, _KEY_AUTH_TOKEN)
-        res = self._client.http_get(ep)
+        res = self._apiclient.http_get(ep)
         return res[_KEY_AUTH_TOKEN]
 
-    def request_wait(self, permission, usermetadata={}):
+    def request_wait(self, permission, userdata={}):
 
-        ath_uid = self.request(permission, usermetadata=usermetadata)
+        ath_uid = self.request(permission, userdata=userdata)
         status = self.status(ath_uid)
         while (status == _VAL_AUTH_STATUS_PENDING):
             time.sleep(_AUTH_WAIT_SLEEP)
@@ -183,42 +183,42 @@ class AuthorizationsClient(ObjectClient):
 
 class CollectionsClient(ObjectClient):
 
-    def create(self, usermetadata={}, token=None):
+    def create(self, userdata={}, token=None):
 
         if not token:
-            a = AuthorizationsClient(self._client)
+            a = AuthorizationsClient(self._apiclient)
             token = a.request_wait(PERM_SRV_COL_CREATE)
             if not token:
                 raise ClientException("Authorization Denied")
 
         ep = "{}".format(_KEY_COL)
-        json_out = {'usermetadata': usermetadata}
-        res = self._client.http_post(ep, json=json_out, token=token)
+        json_out = {'userdata': userdata}
+        res = self._apiclient.http_post(ep, json=json_out, token=token)
         return res[_KEY_COL][0]
 
 class SecretsClient(ObjectClient):
 
-    def create(self, col_uid, data, usermetadata={}, token=None):
+    def create(self, col_uid, data, userdata={}, token=None):
 
         if not token:
-            a = AuthorizationsClient(self._client)
+            a = AuthorizationsClient(self._apiclient)
             token = a.request_wait(PERM_COL_CREATE)
             if not token:
                 raise ClientException("Authorization Denied")
 
         ep = "{}/{}/{}".format(_KEY_COL, col_uid, _KEY_COL_SEC)
-        json_out = {'data': data, 'usermetadata': usermetadata}
-        res = self._client.http_post(ep, json=json_out, token=token)
+        json_out = {'data': data, 'userdata': userdata}
+        res = self._apiclient.http_post(ep, json=json_out, token=token)
         return res[_KEY_COL_SEC][0]
 
     def data(self, col_uid, key_uid, version=None, token=None):
 
         if not token:
-            a = AuthorizationsClient(self._client)
+            a = AuthorizationsClient(self._apiclient)
             token = a.request_wait(PERM_COL_READ)
             if not token:
                 raise ClientException("Authorization Denied")
 
         ep = "{}/{}/{}/{}/versions/latest".format(_KEY_COL, col_uid, _KEY_COL_SEC, key_uid)
-        res = self._client.http_get(ep, token=token)
+        res = self._apiclient.http_get(ep, token=token)
         return res['data']
