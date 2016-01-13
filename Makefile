@@ -12,7 +12,7 @@ REQUIRMENTS = requirments.txt
 
 UNITTEST_PATTERN = '*_test.py'
 
-.PHONY: all reqs test clean
+.PHONY: all reqs2 reqs3 test2 test3 clean
 
 all:
 	$(ECHO) "This is a python project; nothing to build!"
