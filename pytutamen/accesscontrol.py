@@ -17,6 +17,8 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import *
 
+import uuid
+
 import requests
 
 from . import api_client
@@ -53,6 +55,7 @@ class BootstrapClient(api_client.ObjectClient):
             json_out['account_uid'] = str(account_uid)
         if client_uid:
             json_out['client_uid'] = str(client_uid)
+        json_out['client_csr'] = client_csr
 
         res = self._apiclient.http_post(ep, json=json_out)
         account_uid = uuid.UUID(res[_KEY_ACCOUNTS][0])
