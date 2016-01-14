@@ -19,7 +19,9 @@ from builtins import *
 
 import configparser
 import uuid
+import os
 import os.path
+import stat
 
 
 ### Constants ###
@@ -92,11 +94,13 @@ class ClientConfig(object):
 
         return conf
 
-    def _write_file(self, file_path, data):
+    def _write_file(self, file_path, data, mode=None):
 
         file_dir = os.path.dirname(file_path)
         os.makedirs(file_dir, exist_ok=True)
         with open(file_path, 'w') as f:
+            if mode:
+                os.fchmod(f.fileno(), mode)
             f.write(data)
 
     def _read_file(self, file_path):
@@ -204,7 +208,8 @@ class ClientConfig(object):
 
         client_path = self.path_client(account_uid, client_uid)
         key_path = os.path.join(client_path, _FILE_KEY)
-        self._write_file(key_path, key_pem)
+        key_mode = stat.S_IREAD | stat.S_IWRITE
+        self._write_file(key_path, key_pem, mode=key_mode)
 
     def client_get_key(self, account_uid, client_uid):
 
