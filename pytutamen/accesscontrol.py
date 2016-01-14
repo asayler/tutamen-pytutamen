@@ -42,11 +42,15 @@ class APIACException(api_client.APIClientException):
 
 class BootstrapClient(api_client.ObjectClient):
 
-    def account(self, account_userdata={}, account_uid=None,
-                client_userdata={}, client_uid=None, client_csr=None):
+    def account(self, account_userdata=None, account_uid=None,
+                client_userdata=None, client_uid=None, client_csr=None):
 
         if not client_csr:
             raise ValueError("client_csr required")
+        if account_userdata is None:
+            account_userdata = {}
+        if client_userdata is None:
+            client_userdata = {}
 
         ep = "{}/{}".format(_EP_BOOTSTRAP, _KEY_ACCOUNTS)
 
