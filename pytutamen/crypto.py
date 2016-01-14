@@ -55,8 +55,8 @@ def gen_key(length=4096, pub_exp=65537, typ=TYPE_RSA, password=None):
 
     return key_pem
 
-def gen_csr(key_pem, cn, country, state, locality, organization, ou, email,
-            password=None):
+def gen_csr(key_pem, cn, country, state, locality, organization, ou,
+            email=None, password=None):
 
     be = default_backend()
 
@@ -67,7 +67,8 @@ def gen_csr(key_pem, cn, country, state, locality, organization, ou, email,
     sub_attr.append(x509.NameAttribute(x509.NameOID.LOCALITY_NAME, locality))
     sub_attr.append(x509.NameAttribute(x509.NameOID.ORGANIZATION_NAME, organization))
     sub_attr.append(x509.NameAttribute(x509.NameOID.ORGANIZATIONAL_UNIT_NAME, ou))
-    sub_attr.append(x509.NameAttribute(x509.NameOID.EMAIL_ADDRESS, email))
+    if email:
+        sub_attr.append(x509.NameAttribute(x509.NameOID.EMAIL_ADDRESS, email))
 
     key = serialization.load_pem_private_key(key_pem.encode(), password, be)
 
