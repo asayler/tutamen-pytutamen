@@ -85,7 +85,7 @@ def setup_new_account(ac_server_name=None, cn="new_client_cert",
 
     # Generate and Save CSR
     csr_pem = crypto.gen_csr(key_pem, cn, country, state, locality, organization, ou, email)
-    conf.client_set_csr(account_uid, client_uid, csr_pem)
+    conf.client_set_csr(account_uid, client_uid, ac_server_name, csr_pem)
 
     # Bootstrap Account and Save CRT
     apiclient = api_client.APIClient(ac_server_url, path_ca=path_ca)
