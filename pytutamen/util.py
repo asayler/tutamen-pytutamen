@@ -58,7 +58,7 @@ def setup_new_account(ac_server_name=None, cn="new_client_cert",
     # Setup Conf
     conf = config.ClientConfig(conf_path=conf_path)
 
-    # Get URL
+    # Get Server Name and URL
     if not ac_server_name:
         ac_server_name = conf.defaults_get_ac_server()
     ac_server_url = conf.ac_server_get_url(ac_server_name)
@@ -73,15 +73,23 @@ def setup_new_account(ac_server_name=None, cn="new_client_cert",
         if not client_uid:
             client_uid = uuid.uuid4()
 
+    # Check Existing CRT
+    old_crt = conf.client_get_crt(account_uid, client_uid, ac_server_name)
+    if old_crt:
+        msg = "Client already configured for server {}".format(ac_server_name)
+        raise Exception(msg)
+
     # Update Defaults
     if not conf.defaults_get_account_uid():
         conf.defaults_set_account_uid(account_uid)
     if not conf.defaults_get_client_uid():
         conf.defaults_set_client_uid(client_uid)
 
-    # Generate and Save Key
-    key_pem = crypto.gen_key()
-    conf.client_set_key(account_uid, client_uid, key_pem)
+    # Generate and Save Key (if necessary)
+    key_pem = conf.client_get_key(account_uid, client_uid)
+    if not key_pem:
+        key_pem = crypto.gen_key()
+        conf.client_set_key(account_uid, client_uid, key_pem)
 
     # Generate and Save CSR
     csr_pem = crypto.gen_csr(key_pem, cn, country, state, locality, organization, ou, email)
