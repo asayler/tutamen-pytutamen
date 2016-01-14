@@ -29,6 +29,7 @@ from . import api_client
 _EP_BOOTSTRAP = "bootstrap"
 _KEY_ACCOUNTS = "accounts"
 _KEY_CLIENTS = "clients"
+_KEY_CLIENTS_CERTS = "{}_certs".format(_KEY_CLIENTS)
 
 
 ### Exceptions ###
@@ -59,5 +60,6 @@ class BootstrapClient(api_client.ObjectClient):
 
         res = self._apiclient.http_post(ep, json=json_out)
         account_uid = uuid.UUID(res[_KEY_ACCOUNTS][0])
-        client_uid = uuid.UUID(res[_KEY_CLIENTS][0])
-        return (account_uid, client_uid)
+        client_uid, client_cert = res[_KEY_CLIENTS_CERTS].popitem()
+        client_uid = uuid.UUID(client_uid)
+        return (account_uid, client_uid, client_cert)
