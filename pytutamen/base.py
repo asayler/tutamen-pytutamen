@@ -17,6 +17,9 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import *
 
+import os
+import os.path
+
 import requests
 
 
