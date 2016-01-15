@@ -128,17 +128,17 @@ class AuthorizationsClient(AccessControlClient):
 
         json_out = {'objperm': obj_perm,
                     'objtype': obj_type,
-                    'objuid': obj_uid,
+                    'objuid': str(obj_uid),
                     'userdata': userdata}
 
-        res = self._connection.http_post(ep, json=json_out)
-        return res[_KEY_AUTH][0]
+        res = self._ac_connection.http_post(ep, json=json_out)
+        return res[_KEY_AUTHORIZATIONS][0]
 
     def fetch(self, auth_uid):
 
-        ep = "{}/{}/".format(_KEY_AUTHORIZATIONS, ath_uid)
+        ep = "{}/{}/".format(_KEY_AUTHORIZATIONS, auth_uid)
 
-        auth = self._connection.http_get(ep)
+        auth = self._ac_connection.http_get(ep)
         return auth
 
     def request_wait(self, obj_type, obj_uid, obj_perm, userdata=None):
