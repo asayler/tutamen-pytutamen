@@ -50,10 +50,6 @@ def setup_new_account(ac_server_name=None, cn="new_client_cert",
                       client_userdata=None, client_uid=None,
                       conf_path=None, path_ca=None):
 
-    # Check Args
-    if len(country) != 2:
-        raise ValueError("Country must be 2-letter code")
-
     # Setup Conf
     conf = config.ClientConfig(conf_path=conf_path)
 

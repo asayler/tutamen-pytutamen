@@ -58,6 +58,10 @@ def gen_key(length=4096, pub_exp=65537, typ=TYPE_RSA, password=None):
 def gen_csr(key_pem, cn, country, state, locality, organization, ou,
             email=None, password=None):
 
+    # Check Args
+    if len(country) != 2:
+        raise ValueError("Country must be 2-letter code")
+
     be = default_backend()
 
     sub_attr = []
