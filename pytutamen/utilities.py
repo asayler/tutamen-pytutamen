@@ -23,6 +23,16 @@ from . import config
 from . import crypto
 from . import accesscontrol
 
+
+### Constants ###
+
+_DEFAULT_CN = 'new_client_cert'
+_DEFAULT_COUNTRY = 'US'
+_DEFAULT_STATE = 'Colorado'
+_DEFAULT_LOCALITY = 'Boulder'
+_DEFAULT_ORGANIZATION = 'libtutamen_client'
+_DEFAULT_OU = 'libtutamen_client_crt'
+
 ### Functions ###
 
 def setup_new_ac_server(name, url, conf=None, conf_path=None):
@@ -44,12 +54,27 @@ def setup_new_ac_server(name, url, conf=None, conf_path=None):
     if not conf.defaults_get_ac_server():
         conf.defaults_set_ac_server(name)
 
-def setup_new_account(ac_server_name=None, cn="new_client_cert",
-                      email=None, country="US", state="Colorado", locality="Boulder",
-                      organization="libtutamen_client", ou="libtutamen_client_account",
+def setup_new_account(ac_server_name=None, cn=None,
+                      country=None, state=None, locality=None,
+                      organization=None, ou=None,
+                      email=None,
                       account_userdata=None, account_uid=None,
                       client_userdata=None, client_uid=None,
                       conf=None, conf_path=None):
+
+    # Normalize Args
+    if not cn:
+        cn = _DEFAULT_CN
+    if not country:
+        country = _DEFAULT_COUNTRY
+    if not state:
+        state = _DEFAULT_STATE
+    if not locality:
+        locality = _DEFAULT_LOCALITY
+    if not organization:
+        organization = _DEFAULT_ORGANIZATION
+    if not ou:
+        ou = _DEFAULT_OU
 
     # Setup Conf
     if not conf:
