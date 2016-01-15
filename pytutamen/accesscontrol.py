@@ -21,6 +21,7 @@ import uuid
 
 import requests
 
+from . import config
 from . import api_client
 
 
@@ -34,13 +35,57 @@ _KEY_CLIENTS_CERTS = "{}_certs".format(_KEY_CLIENTS)
 
 ### Exceptions ###
 
-class APIACException(api_client.APIClientException):
+class ACServerConnectionException(api_client.ServerConnectionException):
     pass
 
+
+### Connection Objects ###
+
+class ACServerConnection(api_client.ServerConnection):
+
+    def __init__(self, ac_server_url=None, ac_server_ca_crt_path=None,
+                 ac_server_name=None, load_client_key=True,
+                 client_crt_path=None, client_key_path=None,
+                 account_uid=None, client_uid=None,
+                 conf_path=None):
+
+        # Setup Conf
+        conf = config.ClientConfig(conf_path=conf_path)
+
+        # Get Args
+        if not ac_server_url:
+            if not ac_server_name:
+                ac_server_name = conf.defaults_get_ac_server()
+            ac_server_url = conf.ac_server_get_url(ac_server_name)
+            if not ac_server_url:
+                raise(ACServerConnectionException("Missing AC Server URL"))
+
+        if not (client_crt_path and client_key_path) and load_client_key:
+            if not (account_uid and client_uid):
+                account_uid = conf.defaults_get_account_uid()
+                client_uid = conf.defaults_get_client_uid()
+            if account_uid and client_uid and ac_server_name:
+                client_key_path = conf.path_client_key(account_uid, client_uid)
+                client_crt_path = conf.path_client_crt(account_uid, client_uid, ac_server_name)
+
+        # Call Parent
+        super().__init__(server_url=ac_server_url,
+                         server_ca_crt_path = ac_server_ca_crt_path,
+                         client_crt_path = client_crt_path,
+                         client_key_path = client_key_path)
 
 ### Client Objects ###
 
 class BootstrapClient(api_client.ObjectClient):
+
+    def __init__(self, connection):
+
+        # Check Args
+        if not isinstance(connection, ACServerConnection):
+            raise(TypeError("'connection' must of an instance of {}".format(ACServerConnection)))
+
+        # Call Parent
+        super().__init__(connection)
 
     def account(self, account_userdata=None, account_uid=None,
                 client_userdata=None, client_uid=None, client_csr=None):
@@ -62,7 +107,7 @@ class BootstrapClient(api_client.ObjectClient):
             json_out['client_uid'] = str(client_uid)
         json_out['client_csr'] = client_csr
 
-        res = self._apiclient.http_post(ep, json=json_out)
+        res = self._connection.http_post(ep, json=json_out)
         account_uid = uuid.UUID(res[_KEY_ACCOUNTS][0])
         client_uid, client_cert = res[_KEY_CLIENTS_CERTS].popitem()
         client_uid = uuid.UUID(client_uid)

@@ -58,10 +58,9 @@ def setup_new_account(ac_server_name=None, cn="new_client_cert",
     # Setup Conf
     conf = config.ClientConfig(conf_path=conf_path)
 
-    # Get Server Name and URL
+    # Get Server Name
     if not ac_server_name:
         ac_server_name = conf.defaults_get_ac_server()
-    ac_server_url = conf.ac_server_get_url(ac_server_name)
 
     # Get UIDs
     if not account_uid:
@@ -96,9 +95,12 @@ def setup_new_account(ac_server_name=None, cn="new_client_cert",
     conf.client_set_csr(account_uid, client_uid, ac_server_name, csr_pem)
 
     # Bootstrap Account and Save CRT
-    apiclient = api_client.APIClient(ac_server_url, path_ca=path_ca)
-    with apiclient:
-        bootstrap = accesscontrol.BootstrapClient(apiclient)
+    ac_connection = accesscontrol.ACServerConnection(ac_server_name=ac_server_name,
+                                                     account_uid=account_uid,
+                                                     client_uid=client_uid,
+                                                     load_client_key=False)
+    with ac_connection:
+        bootstrap = accesscontrol.BootstrapClient(ac_connection)
         ret = bootstrap.account(account_userdata=account_userdata,
                                 account_uid=account_uid,
                                 client_userdata=client_userdata,

@@ -43,28 +43,29 @@ PERM_COL_READ = "col-read"
 
 ### Exceptions ###
 
-class APIClientException(Exception):
+class ServerConnectionException(Exception):
     pass
 
 
 ### Objects ###
 
-class APIClient(object):
+class ServerConnection(object):
 
-    def __init__(self, url_server=None, path_cert=None, path_key=None, path_ca=None):
+    def __init__(self, server_url=None, server_ca_crt_path=None,
+                 client_crt_path=None, client_key_path=None):
 
         # Get Args
-        if not url_server:
-            raise(APIClientException("url_server required"))
+        if not server_url:
+            raise(ServerConnectionException("server_rul required"))
 
         # Call Parent
         super().__init__()
 
         # Setup Properties
-        self._url_server = url_server
-        self._path_cert = path_cert
-        self._path_key = path_key
-        self._path_ca = path_ca
+        self._url_server = server_url
+        self._path_ca = server_ca_crt_path
+        self._path_key = client_key_path
+        self._path_crt = client_crt_path
 
     def open(self):
         ses = requests.Session()
@@ -72,8 +73,8 @@ class APIClient(object):
             ses.verify = self._path_ca
         else:
             ses.verify = True
-        if self._path_cert and self._path_key:
-            ses.cert = (self._path_cert, self._path_key)
+        if self._path_crt and self._path_key:
+            ses.cert = (self._path_crt, self._path_key)
         self._session = ses
 
     def close(self):
@@ -133,17 +134,17 @@ class APIClient(object):
 
 class ObjectClient(object):
 
-    def __init__(self, apiclient):
+    def __init__(self, connection):
 
         # Check Args
-        if not isinstance(apiclient, APIClient):
-            raise(TypeError("'apiclient' must of an instance of {}".format(APIClient)))
+        if not isinstance(connection, ServerConnection):
+            raise(TypeError("'connection' must of an instance of {}".format(ServerConnection)))
 
         # Call Parent
         super().__init__()
 
         # Setup Properties
-        self._apiclient = apiclient
+        self._connection = connection
 
 class AuthorizationsClient(ObjectClient):
 
@@ -151,19 +152,19 @@ class AuthorizationsClient(ObjectClient):
 
         ep = "{}".format(_KEY_AUTH)
         json_out = {'permission': permission, 'userdata': userdata}
-        res = self._apiclient.http_post(ep, json=json_out)
+        res = self._connection.http_post(ep, json=json_out)
         return res[_KEY_AUTH][0]
 
     def status(self, ath_uid):
 
         ep = "{}/{}/{}".format(_KEY_AUTH, ath_uid, _KEY_AUTH_STATUS)
-        res = self._apiclient.http_get(ep)
+        res = self._connection.http_get(ep)
         return res[_KEY_AUTH_STATUS]
 
     def token(self, ath_uid):
 
         ep = "{}/{}/{}".format(_KEY_AUTH, ath_uid, _KEY_AUTH_TOKEN)
-        res = self._apiclient.http_get(ep)
+        res = self._connection.http_get(ep)
         return res[_KEY_AUTH_TOKEN]
 
     def request_wait(self, permission, userdata={}):
@@ -183,14 +184,14 @@ class CollectionsClient(ObjectClient):
     def create(self, userdata={}, token=None):
 
         if not token:
-            a = AuthorizationsClient(self._apiclient)
+            a = AuthorizationsClient(self._connection)
             token = a.request_wait(PERM_SRV_COL_CREATE)
             if not token:
                 raise ClientException("Authorization Denied")
 
         ep = "{}".format(_KEY_COL)
         json_out = {'userdata': userdata}
-        res = self._apiclient.http_post(ep, json=json_out, token=token)
+        res = self._connection.http_post(ep, json=json_out, token=token)
         return res[_KEY_COL][0]
 
 class SecretsClient(ObjectClient):
@@ -198,24 +199,24 @@ class SecretsClient(ObjectClient):
     def create(self, col_uid, data, userdata={}, token=None):
 
         if not token:
-            a = AuthorizationsClient(self._apiclient)
+            a = AuthorizationsClient(self._connection)
             token = a.request_wait(PERM_COL_CREATE)
             if not token:
                 raise ClientException("Authorization Denied")
 
         ep = "{}/{}/{}".format(_KEY_COL, col_uid, _KEY_COL_SEC)
         json_out = {'data': data, 'userdata': userdata}
-        res = self._apiclient.http_post(ep, json=json_out, token=token)
+        res = self._connection.http_post(ep, json=json_out, token=token)
         return res[_KEY_COL_SEC][0]
 
     def data(self, col_uid, key_uid, version=None, token=None):
 
         if not token:
-            a = AuthorizationsClient(self._apiclient)
+            a = AuthorizationsClient(self._connection)
             token = a.request_wait(PERM_COL_READ)
             if not token:
                 raise ClientException("Authorization Denied")
 
         ep = "{}/{}/{}/{}/versions/latest".format(_KEY_COL, col_uid, _KEY_COL_SEC, key_uid)
-        res = self._apiclient.http_get(ep, token=token)
+        res = self._connection.http_get(ep, token=token)
         return res['data']
