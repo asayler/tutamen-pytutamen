@@ -25,10 +25,11 @@ from . import accesscontrol
 
 ### Functions ###
 
-def setup_new_ac_server(name, url, conf_path=None):
+def setup_new_ac_server(name, url, conf=None, conf_path=None):
 
     # Setup Conf
-    conf = config.ClientConfig(conf_path=conf_path)
+    if not conf:
+        conf = config.ClientConfig(conf_path=conf_path)
 
     # Save Server Config
     if conf.ac_server_configured(name):
@@ -48,10 +49,11 @@ def setup_new_account(ac_server_name=None, cn="new_client_cert",
                       organization="libtutamen_client", ou="libtutamen_client_account",
                       account_userdata=None, account_uid=None,
                       client_userdata=None, client_uid=None,
-                      conf_path=None, path_ca=None):
+                      conf=None, conf_path=None):
 
     # Setup Conf
-    conf = config.ClientConfig(conf_path=conf_path)
+    if not conf:
+        conf = config.ClientConfig(conf_path=conf_path)
 
     # Get Server Name
     if not ac_server_name:
