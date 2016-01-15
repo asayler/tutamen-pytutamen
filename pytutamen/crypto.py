@@ -28,18 +28,18 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 
 TYPE_RSA = 'RSA'
 
-_SUPPORTED_LENGTH = [2048, 4096]
-_SUPPORTED_EXP = [3, 65537]
+_RSA_SUPPORTED_LENGTH = [2048, 4096]
+_RSA_SUPPORTED_EXP = [3, 65537]
 
 
 ### Functions ###
 
 def gen_key(length=4096, pub_exp=65537, typ=TYPE_RSA, password=None):
 
-    if length not in _SUPPORTED_LENGTH:
-        raise TypeError("Length must be one of '{}'".format(_SUPPOERTED_LENGTH))
-    if pub_exp not in _SUPPORTED_EXP:
-        raise TypeError("pub_exp must be one of '{}'".format(_SUPPOERTED_EXP))
+    if length not in _RSA_SUPPORTED_LENGTH:
+        raise TypeError("Length must be one of '{}'".format(_RSA_SUPPORTED_LENGTH))
+    if pub_exp not in _RSA_SUPPORTED_EXP:
+        raise TypeError("pub_exp must be one of '{}'".format(_RSA_SUPPORTED_EXP))
     if typ != TYPE_RSA:
         raise TypeError("Only type '{}' supported".format(TYPE_RSA))
 
