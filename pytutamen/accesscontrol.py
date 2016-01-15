@@ -22,7 +22,7 @@ import uuid
 import requests
 
 from . import config
-from . import api_client
+from . import base
 
 
 ### Constants ###
@@ -35,13 +35,13 @@ _KEY_CLIENTS_CERTS = "{}_certs".format(_KEY_CLIENTS)
 
 ### Exceptions ###
 
-class ACServerConnectionException(api_client.ServerConnectionException):
+class ACServerConnectionException(base.ServerConnectionException):
     pass
 
 
 ### Connection Objects ###
 
-class ACServerConnection(api_client.ServerConnection):
+class ACServerConnection(base.ServerConnection):
 
     def __init__(self, ac_server_url=None, ac_server_ca_crt_path=None,
                  ac_server_name=None, load_client_key=True,
@@ -76,7 +76,7 @@ class ACServerConnection(api_client.ServerConnection):
 
 ### Client Objects ###
 
-class BootstrapClient(api_client.ObjectClient):
+class BootstrapClient(base.ObjectClient):
 
     def __init__(self, connection):
 

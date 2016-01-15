@@ -21,7 +21,6 @@ import uuid
 
 from . import config
 from . import crypto
-from . import api_client
 from . import accesscontrol
 
 ### Functions ###
