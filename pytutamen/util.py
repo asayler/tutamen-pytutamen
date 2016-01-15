@@ -97,7 +97,8 @@ def setup_new_account(ac_server_name=None, cn="new_client_cert",
     ac_connection = accesscontrol.ACServerConnection(ac_server_name=ac_server_name,
                                                      account_uid=account_uid,
                                                      client_uid=client_uid,
-                                                     load_client_key=False)
+                                                     no_client_crt=True,
+                                                     conf=conf)
     with ac_connection:
         bootstrap = accesscontrol.BootstrapClient(ac_connection)
         ret = bootstrap.account(account_userdata=account_userdata,

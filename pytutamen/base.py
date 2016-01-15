@@ -51,12 +51,15 @@ class ServerConnectionException(Exception):
 
 class ServerConnection(object):
 
-    def __init__(self, server_url=None, server_ca_crt_path=None,
-                 client_crt_path=None, client_key_path=None):
+    def __init__(self, server_url=None, server_name=None, server_ca_crt_path=None,
+                 account_uid=None, client_uid=None, no_client_crt=False,
+                 conf=None, conf_path=None):
 
-        # Get Args
+        # Check Args
         if not server_url:
-            raise(ServerConnectionException("server_rul required"))
+            raise(ServerConnectionException("server_url required"))
+        if not server_name:
+            raise(ServerConnectionException("server_name required"))
 
         # Call Parent
         super().__init__()
@@ -64,8 +67,40 @@ class ServerConnection(object):
         # Setup Properties
         self._url_server = server_url
         self._path_ca = server_ca_crt_path
-        self._path_key = client_key_path
-        self._path_crt = client_crt_path
+
+        # Setup Conf
+        if not conf:
+            conf = config.ClientConfig(conf_path=conf_path)
+        self._conf = conf
+
+        # Get UIDs
+        if not account_uid:
+            account_uid = conf.defaults_get_account_uid()
+            if not account_uid:
+                raise(ACServerConnectionException("Missing Account UID"))
+        self._account_uid = account_uid
+        if not client_uid:
+            client_uid = conf.defaults_get_client_uid()
+            if not client_uid:
+                raise(ACServerConnectionException("Missing Client UID"))
+        self._client_uid = client_uid
+
+        # Get Certs
+        if not no_client_crt:
+
+            client_key_path = conf.path_client_key(account_uid, client_uid)
+            if not os.path.isfile(client_key_path):
+                raise(ServerConnectionException("Missing Client Key"))
+            self._client_key_path = client_key_path
+
+            client_crt_path = conf.path_client_crt(account_uid, client_uid, server_name)
+            if not os.path.isfile(client_crt_path):
+                raise(ServerConnectionException("Missing Client Cert"))
+            self._client_crt_path = client_crt_path
+
+        else:
+            self._client_key_path = None
+            self._client_crt_path = None
 
     def open(self):
         ses = requests.Session()
@@ -73,8 +108,8 @@ class ServerConnection(object):
             ses.verify = self._path_ca
         else:
             ses.verify = True
-        if self._path_crt and self._path_key:
-            ses.cert = (self._path_crt, self._path_key)
+        if self._client_crt_path and self._client_key_path:
+            ses.cert = (self._client_crt_path, self._client_key_path)
         self._session = ses
 
     def close(self):
