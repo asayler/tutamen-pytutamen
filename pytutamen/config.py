@@ -204,39 +204,47 @@ class ClientConfig(object):
 
     ## CLIENT ##
 
+    def path_client_key(self, account_uid, client_uid):
+        client_path = self.path_client(account_uid, client_uid)
+        return os.path.join(client_path, _FILE_KEY)
+
     def client_set_key(self, account_uid, client_uid, key_pem):
 
-        client_path = self.path_client(account_uid, client_uid)
-        key_path = os.path.join(client_path, _FILE_KEY)
+        key_path = self.path_client_key(account_uid, client_uid)
         key_mode = stat.S_IREAD | stat.S_IWRITE
         self._write_file(key_path, key_pem, mode=key_mode)
 
     def client_get_key(self, account_uid, client_uid):
 
-        client_path = self.path_client(account_uid, client_uid)
-        key_path = os.path.join(client_path, _FILE_KEY)
+        key_path = self.path_client_key(account_uid, client_uid)
         return self._read_file(key_path)
 
-    def client_set_csr(self, account_uid, client_uid, srv, csr_pem):
+    def path_client_csr(self, account_uid, client_uid, server_name):
 
         client_path = self.path_client(account_uid, client_uid)
-        csr_path = os.path.join(client_path, "{}_{}".format(srv, _FILE_CSR))
+        return os.path.join(client_path, "{}_{}".format(server_name, _FILE_CSR))
+
+    def client_set_csr(self, account_uid, client_uid, server_name, csr_pem):
+
+        csr_path = self.path_client_csr(account_uid, client_uid, server_name)
         self._write_file(csr_path, csr_pem)
 
     def client_get_csr(self, account_uid, srv, client_uid):
 
-        client_path = self.path_client(account_uid, client_uid)
-        csr_path = os.path.join(client_path, "{}_{}".format(srv, _FILE_CSR))
+        csr_path = self.path_client_csr(account_uid, client_uid, server_name)
         return self._read_file(csr_path)
 
-    def client_set_crt(self, account_uid, client_uid, srv, crt_pem):
+    def path_client_crt(self, account_uid, client_uid, server_name):
 
         client_path = self.path_client(account_uid, client_uid)
-        crt_path = os.path.join(client_path, "{}_{}".format(srv, _FILE_CRT))
+        return os.path.join(client_path, "{}_{}".format(server_name, _FILE_CRT))
+
+    def client_set_crt(self, account_uid, client_uid, server_name, crt_pem):
+
+        crt_path = self.path_client_crt(account_uid, client_uid, server_name)
         self._write_file(crt_path, crt_pem)
 
-    def client_get_crt(self, account_uid, client_uid, srv):
+    def client_get_crt(self, account_uid, client_uid, server_name):
 
-        client_path = self.path_client(account_uid, client_uid)
-        crt_path = os.path.join(client_path, "{}_{}".format(srv, _FILE_CRT))
+        crt_path = self.path_client_crt(account_uid, client_uid, server_name)
         return self._read_file(crt_path)
