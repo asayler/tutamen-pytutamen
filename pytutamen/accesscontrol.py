@@ -64,7 +64,7 @@ class ACServerConnection(base.ServerConnection):
 
 ### Client Objects ###
 
-class BootstrapClient(object):
+class AccessControlClient(object):
 
     def __init__(self, ac_connection):
 
@@ -77,6 +77,8 @@ class BootstrapClient(object):
 
         # Setup Properties
         self._ac_connection = ac_connection
+
+class BootstrapClient(AccessControlClient):
 
     def account(self, account_userdata=None, account_uid=None,
                 client_userdata=None, client_uid=None, client_csr=None):
