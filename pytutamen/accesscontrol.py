@@ -25,10 +25,21 @@ from . import base
 
 ### Constants ###
 
+_WAIT_SLEEP = 0.1
+
 _EP_BOOTSTRAP = "bootstrap"
+
 _KEY_ACCOUNTS = "accounts"
+
 _KEY_CLIENTS = "clients"
 _KEY_CLIENTS_CERTS = "{}_certs".format(_KEY_CLIENTS)
+
+_EP_AUTHORIZATIONS = "authorizations"
+_KEY_AUTHORIZATIONS = "authorizations"
+_KEY_AUTHORIZATIONS_STATUS = "status"
+_KEY_AUTHORIZATIONS_TOKEN = "token"
+_VAL_AUTHORIZATIONS_STATUS_PENDING = 'pending'
+_VAL_AUTHORIZATIONS_STATUS_GRANTED = 'granted'
 
 
 ### Exceptions ###
@@ -105,3 +116,41 @@ class BootstrapClient(AccessControlClient):
         client_uid, client_cert = res[_KEY_CLIENTS_CERTS].popitem()
         client_uid = uuid.UUID(client_uid)
         return (account_uid, client_uid, client_cert)
+
+class AuthorizationsClient(AccessControlClient):
+
+    def request(self, obj_type, obj_uid, obj_perm, userdata=None):
+
+        if userdata is None:
+            userdata = {}
+
+        ep = "{}".format(_EP_AUTHORIZATIONS)
+
+        json_out = {'objperm': obj_perm,
+                    'objtype': obj_type,
+                    'objuid': obj_uid,
+                    'userdata': userdata}
+
+        res = self._connection.http_post(ep, json=json_out)
+        return res[_KEY_AUTH][0]
+
+    def fetch(self, auth_uid):
+
+        ep = "{}/{}/".format(_KEY_AUTHORIZATIONS, ath_uid)
+
+        auth = self._connection.http_get(ep)
+        return auth
+
+    def request_wait(self, obj_type, obj_uid, obj_perm, userdata=None):
+
+        auth_uid = self.request(obj_type, obj_uid, obj_perm, userdata=userdata)
+        auth = self.fetch(auth_uid)
+        status = auth[_KEY_AUTHORIZATIONS_STATUS]
+        while (status == _VAL_AUTHORIZATIONS_STATUS_PENDING):
+            time.sleep(_WAIT_SLEEP)
+            auth = self.fetch(auth_uid)
+            status = auth[_KEY_AUTHORIZATIONS_STATUS]
+        if (status == _VAL_AUTHORIZATIONS_STATUS_GRANTED):
+            return auth[_KEY_AUTHORIZATIONS_TOKEN]
+        else:
+            return None

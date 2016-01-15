@@ -22,16 +22,8 @@ import requests
 
 ### Constants ###
 
-_AUTH_WAIT_SLEEP = 0.1
-
-_KEY_AUTH = "authorizations"
-_KEY_AUTH_STATUS = "status"
-_KEY_AUTH_TOKEN = "token"
 _KEY_COL = "collections"
 _KEY_COL_SEC = "secrets"
-
-_VAL_AUTH_STATUS_PENDING = 'pending'
-_VAL_AUTH_STATUS_GRANTED = 'granted'
 
 _API_BASE = 'api'
 _API_VERSION = 'v1'
@@ -180,39 +172,6 @@ class ObjectClient(object):
 
         # Setup Properties
         self._connection = connection
-
-class AuthorizationsClient(ObjectClient):
-
-    def request(self, permission, userdata={}):
-
-        ep = "{}".format(_KEY_AUTH)
-        json_out = {'permission': permission, 'userdata': userdata}
-        res = self._connection.http_post(ep, json=json_out)
-        return res[_KEY_AUTH][0]
-
-    def status(self, ath_uid):
-
-        ep = "{}/{}/{}".format(_KEY_AUTH, ath_uid, _KEY_AUTH_STATUS)
-        res = self._connection.http_get(ep)
-        return res[_KEY_AUTH_STATUS]
-
-    def token(self, ath_uid):
-
-        ep = "{}/{}/{}".format(_KEY_AUTH, ath_uid, _KEY_AUTH_TOKEN)
-        res = self._connection.http_get(ep)
-        return res[_KEY_AUTH_TOKEN]
-
-    def request_wait(self, permission, userdata={}):
-
-        ath_uid = self.request(permission, userdata=userdata)
-        status = self.status(ath_uid)
-        while (status == _VAL_AUTH_STATUS_PENDING):
-            time.sleep(_AUTH_WAIT_SLEEP)
-            status = self.status(ath_uid)
-        if (status == _VAL_AUTH_STATUS_GRANTED):
-            return self.token(ath_uid)
-        else:
-            return None
 
 class CollectionsClient(ObjectClient):
 
