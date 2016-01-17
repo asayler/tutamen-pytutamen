@@ -25,15 +25,9 @@ import requests
 
 ### Constants ###
 
-_KEY_COL = "collections"
-_KEY_COL_SEC = "secrets"
-
 _API_BASE = 'api'
 _API_VERSION = 'v1'
-
-PERM_SRV_COL_CREATE = "srv-col-create"
-PERM_COL_CREATE = "col-create"
-PERM_COL_READ = "col-read"
+_TOKEN_DELIMINATOR = ':'
 
 
 ### Exceptions ###
@@ -119,13 +113,6 @@ class ServerConnection(object):
         self.close()
         return False
 
-    def _token_to_auth(self, token):
-        if token:
-            auth = requests.auth.HTTPBasicAuth(token, '')
-        else:
-            auth = None
-        return auth
-
     @property
     def url_srv(self):
         return self._url_server
@@ -134,31 +121,44 @@ class ServerConnection(object):
     def url_api(self):
         return "{}/{}/{}".format(self.url_srv, _API_BASE, _API_VERSION)
 
-    def http_post(self, endpoint, json=None, token=None):
-        auth = self._token_to_auth(token)
+    def _tokens_to_header(tokens=None):
+
+        if tokens is None:
+            tokens = []
+
+        tokens_str = ""
+        for token in tokens:
+            tokens_str += token
+            tokens_str += _TOKEN_DELIMINATOR
+
+        header = {'tutamen-tokens': tokens_str}
+        return header
+
+    def http_post(self, endpoint, json=None, tokens=None, auth=None):
         url = "{:s}/{:s}/".format(self.url_api, endpoint)
-        res = self._session.post(url, json=json, auth=auth)
+        header = _tokens_to_header(tokens)
+        res = self._session.post(url, json=json, headers=header, auth=auth)
         res.raise_for_status()
         return res.json()
 
-    def http_put(self, endpoint, json=None, token=None):
-        auth = self._token_to_auth(token)
+    def http_put(self, endpoint, json=None, tokens=None, auth=None):
         url = "{:s}/{:s}/".format(self.url_api, endpoint)
-        res = self._session.put(url, json=json, auth=auth)
+        header = _tokens_to_header(tokens)
+        res = self._session.put(url, json=json, headers=header, auth=auth)
         res.raise_for_status()
         return res.json()
 
-    def http_get(self, endpoint=None, token=None):
-        auth = self._token_to_auth(token)
+    def http_get(self, endpoint=None, tokens=None, auth=None):
         url = "{:s}/{:s}/".format(self.url_api, endpoint)
-        res = self._session.get(url, auth=auth)
+        header = _tokens_to_header(tokens)
+        res = self._session.get(url, headers=header, auth=auth)
         res.raise_for_status()
         return res.json()
 
-    def http_delete(self, endpoint=None, token=None):
-        auth = self._token_to_auth(token)
+    def http_delete(self, endpoint=None, tokens=None, auth=None):
         url = "{:s}/{:s}/".format(self.url_api, endpoint)
-        res = self._session.delete(url, auth=auth)
+        header = _tokens_to_header(tokens)
+        res = self._session.delete(url, headers=header, auth=auth)
         res.raise_for_status()
         return res.json()
 
