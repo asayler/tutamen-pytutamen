@@ -96,26 +96,30 @@ class BootstrapClient(AccessControlClient):
 
         if not client_csr:
             raise ValueError("client_csr required")
-        if account_userdata is None:
-            account_userdata = {}
-        if client_userdata is None:
-            client_userdata = {}
 
         ep = "{}/{}".format(_EP_BOOTSTRAP, _KEY_ACCOUNTS)
 
-        json_out = {'account_userdata': account_userdata,
-                    'client_userdata': client_userdata}
+        json_out = {'client_csr': client_csr}
+        if account_userdata:
+            json_out['account_userdata'] = account_userdata
+        if client_userdata:
+            json_out['client_userdata'] = client_userdata
         if account_uid:
             json_out['account_uid'] = str(account_uid)
         if client_uid:
             json_out['client_uid'] = str(client_uid)
-        json_out['client_csr'] = client_csr
 
         res = self._ac_connection.http_post(ep, json=json_out)
-        account_uid = uuid.UUID(res[_KEY_ACCOUNTS][0])
-        client_uid, client_cert = res[_KEY_CLIENTS_CERTS].popitem()
-        client_uid = uuid.UUID(client_uid)
-        return (account_uid, client_uid, client_cert)
+        res_account_uid = uuid.UUID(res[_KEY_ACCOUNTS][0])
+        if account_uid:
+            assert res_account_uid == account_uid
+
+        res_client_uid, res_client_cert = res[_KEY_CLIENTS_CERTS].popitem()
+        res_client_uid = uuid.UUID(client_uid)
+        if client_uid:
+            assert res_client_uid == client_uid
+
+        return (res_account_uid, res_client_uid, res_client_cert)
 
 class AuthorizationsClient(AccessControlClient):
 
