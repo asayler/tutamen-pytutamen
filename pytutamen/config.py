@@ -29,7 +29,7 @@ import stat
 _DEFAULT_CONFIG_PATH = "~/.config/pytutamen_client"
 
 _SUB_AC = "srv_ac"
-_SUB_SS = "srv_ss"
+_SUB_STORAGE = "srv_storage"
 _SUB_ACCOUNTS = "accounts"
 _SUB_CLIENTS = "clients"
 
@@ -45,6 +45,7 @@ _KEY_URL = "url"
 _KEY_ACCOUNT = "account"
 _KEY_CLIENT = "client"
 _KEY_ACSRV = "ac_server"
+_KEY_STORAGESRV = "storage_server"
 
 _EXT_CONF = "conf"
 
@@ -131,8 +132,12 @@ class ClientConfig(object):
         return "{}.{}".format(self.path_srv_ac, _EXT_CONF)
 
     @property
-    def path_srv_ss(self):
-        return os.path.join(self.path, _SUB_SS)
+    def path_srv_storage(self):
+        return os.path.join(self.path, _SUB_STORAGE)
+
+    @property
+    def path_srv_storage_conf(self):
+        return "{}.{}".format(self.path_srv_storage, _EXT_CONF)
 
     @property
     def path_accounts(self):
@@ -158,6 +163,17 @@ class ClientConfig(object):
 
         conf = self._conf_get_section(self.path_core_conf, _SEC_DEFAULTS)
         conf[_KEY_ACSRV] = name
+        self._conf_set_section(self.path_core_conf, _SEC_DEFAULTS, conf)
+
+    def defaults_get_storage_server(self):
+
+        conf = self._conf_get_section(self.path_core_conf, _SEC_DEFAULTS)
+        return conf.get(_KEY_STORAGESRV, None)
+
+    def defaults_set_storage_server(self, name):
+
+        conf = self._conf_get_section(self.path_core_conf, _SEC_DEFAULTS)
+        conf[_KEY_STORAGESRV] = name
         self._conf_set_section(self.path_core_conf, _SEC_DEFAULTS, conf)
 
     def defaults_get_account_uid(self):
@@ -202,7 +218,25 @@ class ClientConfig(object):
         conf = self._conf_get_section(self.path_srv_ac_conf, name)
         return conf.get(_KEY_URL, None)
 
-    ## CLIENT ##
+    ## Storage Server ##
+
+    def storage_server_configured(self, srv):
+
+        conf = self._conf_get_section(self.path_srv_storage_conf, srv)
+        return bool(conf)
+
+    def storage_server_set_url(self, name, url):
+
+        conf = self._conf_get_section(self.path_srv_storage_conf, name)
+        conf[_KEY_URL] = url
+        self._conf_set_section(self.path_srv_storage_conf, name, conf)
+
+    def storage_server_get_url(self, name):
+
+        conf = self._conf_get_section(self.path_srv_storage_conf, name)
+        return conf.get(_KEY_URL, None)
+
+    ## Client ##
 
     def path_client_key(self, account_uid, client_uid):
         client_path = self.path_client(account_uid, client_uid)

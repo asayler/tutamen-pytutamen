@@ -54,6 +54,25 @@ def setup_new_ac_server(name, url, conf=None, conf_path=None):
     if not conf.defaults_get_ac_server():
         conf.defaults_set_ac_server(name)
 
+def setup_new_storage_server(name, url, conf=None, conf_path=None):
+
+    # Setup Conf
+    if not conf:
+        conf = config.ClientConfig(conf_path=conf_path)
+
+    # Save Server Config
+    if conf.storage_server_configured(name):
+        old_url = conf.storage_server_get_url(name)
+        if url != old_url:
+            msg = "Storage Server '{}' already configured with different URL".format(name)
+            raise Exception(msg)
+    else:
+        conf.storage_server_set_url(name, url)
+
+    # Update Defaults
+    if not conf.defaults_get_storage_server():
+        conf.defaults_set_storage_server(name)
+
 def setup_new_account(ac_server_name=None, cn=None,
                       country=None, state=None, locality=None,
                       organization=None, ou=None,
