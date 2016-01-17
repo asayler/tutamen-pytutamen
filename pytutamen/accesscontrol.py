@@ -39,7 +39,7 @@ _KEY_AUTHORIZATIONS = "authorizations"
 _KEY_AUTHORIZATIONS_STATUS = "status"
 _KEY_AUTHORIZATIONS_TOKEN = "token"
 _VAL_AUTHORIZATIONS_STATUS_PENDING = 'pending'
-_VAL_AUTHORIZATIONS_STATUS_GRANTED = 'granted'
+_VAL_AUTHORIZATIONS_STATUS_GRANTED = 'approved'
 
 
 ### Exceptions ###
@@ -132,18 +132,17 @@ class AuthorizationsClient(AccessControlClient):
                     'userdata': userdata}
 
         res = self._ac_connection.http_post(ep, json=json_out)
-        return res[_KEY_AUTHORIZATIONS][0]
+        return uuid.UUID(res[_KEY_AUTHORIZATIONS][0])
 
     def fetch(self, auth_uid):
 
-        ep = "{}/{}/".format(_KEY_AUTHORIZATIONS, auth_uid)
+        ep = "{}/{}/".format(_KEY_AUTHORIZATIONS, str(auth_uid))
 
         auth = self._ac_connection.http_get(ep)
         return auth
 
-    def request_wait(self, obj_type, obj_uid, obj_perm, userdata=None):
+    def wait_token(self, auth_uid):
 
-        auth_uid = self.request(obj_type, obj_uid, obj_perm, userdata=userdata)
         auth = self.fetch(auth_uid)
         status = auth[_KEY_AUTHORIZATIONS_STATUS]
         while (status == _VAL_AUTHORIZATIONS_STATUS_PENDING):
