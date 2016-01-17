@@ -72,7 +72,7 @@ class StorageClient(object):
     def __init__(self, storage_connection):
 
         # Check Args
-        if not isinstance(storage_connection, ACServerConnection):
+        if not isinstance(storage_connection, StorageServerConnection):
             msg = "'storage_connection' must of an instance of '{}'".format(StorageServerConnection)
             raise(TypeError(msg))
 
@@ -98,7 +98,7 @@ class CollectionsClient(StorageClient):
         if uid:
             json_out['uid'] = str(uid)
 
-        res = self._connection.http_post(ep, json=json_out, tokens=tokens)
+        res = self._storage_connection.http_post(ep, json=json_out, tokens=tokens)
         res_uid = uuid.UUID(res[_KEY_COL][0])
         if uid:
             assert uid == res_uid
@@ -121,7 +121,7 @@ class SecretsClient(StorageClient):
         if uid:
             json_out['uid'] = str(uid)
 
-        res = self._connection.http_post(ep, json=json_out, tokens=tokens)
+        res = self._storage_connection.http_post(ep, json=json_out, tokens=tokens)
         res_uid = uuid.UUID(res[_KEY_COL_SEC][0])
         if uid:
             assert uid == res_uid
@@ -135,5 +135,5 @@ class SecretsClient(StorageClient):
     def fetch(self, tokens, col_uid, key_uid):
 
         ep = "{}/{}/{}/{}/versions/latest".format(_KEY_COL, col_uid, _KEY_COL_SEC, key_uid)
-        sec = self._connection.http_get(ep, tokens=tokens)
+        sec = self._storage_connection.http_get(ep, tokens=tokens)
         return sec
