@@ -43,7 +43,7 @@ def setup_new_ac_server(name, url, conf=None, conf_path=None):
 
     # Save Server Config
     if conf.ac_server_configured(name):
-        old_url = conf.get_ac_server_url(name)
+        old_url = conf.ac_server_get_url(name)
         if url != old_url:
             msg = "AC Server '{}' already configured with different URL".format(name)
             raise Exception(msg)
