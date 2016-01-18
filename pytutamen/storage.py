@@ -25,6 +25,9 @@ from . import base
 
 ### Constants ###
 
+TYPE_SRV_COL = "server-collection"
+TYPE_COL = "collection"
+
 PERM_SRV_COL_CREATE = "srv-col-create"
 PERM_COL_CREATE = "col-create"
 PERM_COL_READ = "col-read"
@@ -85,7 +88,11 @@ class StorageClient(object):
 class CollectionsClient(StorageClient):
 
     @property
-    def create_perm(self):
+    def objtype(self):
+        return TYPE_SRV_COL
+
+    @property
+    def objperm_create(self):
         return PERM_SRV_COL_CREATE
 
     def create(self, tokens, userdata=None, uid=None):
@@ -108,10 +115,21 @@ class CollectionsClient(StorageClient):
 class SecretsClient(StorageClient):
 
     @property
-    def create_perm(self):
+    def objtype(self):
+        return TYPE_COL
+
+    @property
+    def objperm_create(self):
         return PERM_COL_CREATE
 
     def create(self, tokens, col_uid, data, userdata=None, uid=None):
+
+        if not isinstance(tokens, list):
+            raise TypeError("tokens must be list")
+        if not isinstance(col_uid, uuid.UUID):
+            raise TypeError("col_uid must be uuid")
+        if not isinstance(data, str):
+            raise TypeError("data must be string")
 
         ep = "{}/{}/{}".format(_KEY_COL, str(col_uid), _KEY_COL_SEC)
 
@@ -129,10 +147,17 @@ class SecretsClient(StorageClient):
         return res_uid
 
     @property
-    def fetch_perm(self):
+    def objperm_fetch(self):
         return PERM_COL_READ
 
     def fetch(self, tokens, col_uid, key_uid):
+
+        if not isinstance(tokens, list):
+            raise TypeError("tokens must be list")
+        if not isinstance(col_uid, uuid.UUID):
+            raise TypeError("col_uid must be uuid")
+        if not isinstance(key_uid, uuid.UUID):
+            raise TypeError("key_uid must be uuid")
 
         ep = "{}/{}/{}/{}/versions/latest".format(_KEY_COL, col_uid, _KEY_COL_SEC, key_uid)
         sec = self._storage_connection.http_get(ep, tokens=tokens)
