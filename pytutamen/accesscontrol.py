@@ -26,6 +26,7 @@ from . import base
 ### Constants ###
 
 _WAIT_SLEEP = 0.1
+_DEFAULT_TIMEOUT = 60
 
 _EP_BOOTSTRAP = "bootstrap"
 
@@ -145,14 +146,18 @@ class AuthorizationsClient(AccessControlClient):
         auth = self._ac_connection.http_get(ep)
         return auth
 
-    def wait_token(self, auth_uid):
+    def wait_token(self, auth_uid, timeout=_DEFAULT_TIMEOUT):
 
         auth = self.fetch(auth_uid)
         status = auth[_KEY_AUTHORIZATIONS_STATUS]
+        cnt = 0
         while (status == _VAL_AUTHORIZATIONS_STATUS_PENDING):
+            if (cnt * _WAIT_SLEEP) > timeout:
+                raise Exception("Timed out wating for token")
             time.sleep(_WAIT_SLEEP)
             auth = self.fetch(auth_uid)
             status = auth[_KEY_AUTHORIZATIONS_STATUS]
+            cnt += 1
         if (status == _VAL_AUTHORIZATIONS_STATUS_GRANTED):
             return auth[_KEY_AUTHORIZATIONS_TOKEN]
         else:
