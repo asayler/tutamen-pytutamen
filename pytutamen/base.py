@@ -121,7 +121,7 @@ class ServerConnection(object):
     def url_api(self):
         return "{}/{}/{}".format(self.url_srv, _API_BASE, _API_VERSION)
 
-    def _tokens_to_header(tokens=None):
+    def _tokens_to_header(self, tokens=None):
 
         if tokens is None:
             tokens = []
@@ -136,28 +136,28 @@ class ServerConnection(object):
 
     def http_post(self, endpoint, json=None, tokens=None, auth=None):
         url = "{:s}/{:s}/".format(self.url_api, endpoint)
-        header = _tokens_to_header(tokens)
+        header = self._tokens_to_header(tokens)
         res = self._session.post(url, json=json, headers=header, auth=auth)
         res.raise_for_status()
         return res.json()
 
     def http_put(self, endpoint, json=None, tokens=None, auth=None):
         url = "{:s}/{:s}/".format(self.url_api, endpoint)
-        header = _tokens_to_header(tokens)
+        header = self._tokens_to_header(tokens)
         res = self._session.put(url, json=json, headers=header, auth=auth)
         res.raise_for_status()
         return res.json()
 
     def http_get(self, endpoint=None, tokens=None, auth=None):
         url = "{:s}/{:s}/".format(self.url_api, endpoint)
-        header = _tokens_to_header(tokens)
+        header = self._tokens_to_header(tokens)
         res = self._session.get(url, headers=header, auth=auth)
         res.raise_for_status()
         return res.json()
 
     def http_delete(self, endpoint=None, tokens=None, auth=None):
         url = "{:s}/{:s}/".format(self.url_api, endpoint)
-        header = _tokens_to_header(tokens)
+        header = self._tokens_to_header(tokens)
         res = self._session.delete(url, headers=header, auth=auth)
         res.raise_for_status()
         return res.json()

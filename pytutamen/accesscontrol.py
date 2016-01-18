@@ -115,7 +115,7 @@ class BootstrapClient(AccessControlClient):
             assert res_account_uid == account_uid
 
         res_client_uid, res_client_cert = res[_KEY_CLIENTS_CERTS].popitem()
-        res_client_uid = uuid.UUID(client_uid)
+        res_client_uid = uuid.UUID(res_client_uid)
         if client_uid:
             assert res_client_uid == client_uid
 
