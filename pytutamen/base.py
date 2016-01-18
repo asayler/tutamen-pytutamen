@@ -27,7 +27,7 @@ import requests
 
 _API_BASE = 'api'
 _API_VERSION = 'v1'
-_TOKENs_DELIMINATOR = ':'
+_TOKENS_DELIMINATOR = ':'
 _TOKENS_HEADER = 'tutamen-tokens'
 
 ### Exceptions ###
@@ -128,8 +128,9 @@ class ServerConnection(object):
 
         tokens_str = ""
         for token in tokens:
-            tokens_str += token
+            tokens_str += token.strip()
             tokens_str += _TOKENS_DELIMINATOR
+        tokens_str = tokens_str.strip(_TOKENS_DELIMINATOR)
 
         header = {_TOKENS_HEADER: tokens_str}
         return header
