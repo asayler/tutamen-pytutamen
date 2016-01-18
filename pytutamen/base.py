@@ -27,8 +27,8 @@ import requests
 
 _API_BASE = 'api'
 _API_VERSION = 'v1'
-_TOKEN_DELIMINATOR = ':'
-
+_TOKENs_DELIMINATOR = ':'
+_TOKENS_HEADER = 'tutamen-tokens'
 
 ### Exceptions ###
 
@@ -129,9 +129,9 @@ class ServerConnection(object):
         tokens_str = ""
         for token in tokens:
             tokens_str += token
-            tokens_str += _TOKEN_DELIMINATOR
+            tokens_str += _TOKENS_DELIMINATOR
 
-        header = {'tutamen-tokens': tokens_str}
+        header = {_TOKENS_HEADER: tokens_str}
         return header
 
     def http_post(self, endpoint, json=None, tokens=None, auth=None):
