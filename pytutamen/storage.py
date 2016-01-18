@@ -95,11 +95,16 @@ class CollectionsClient(StorageClient):
     def objperm_create(self):
         return PERM_SRV_COL_CREATE
 
-    def create(self, tokens, userdata=None, uid=None):
+    def create(self, tokens, ac_servers, userdata=None, uid=None):
+
+        if not isinstance(tokens, list):
+            raise TypeError("tokens must be list")
+        if not isinstance(ac_servers, list):
+            raise TypeError("ac_servers must be list")
 
         ep = "{}".format(_KEY_COL)
 
-        json_out = {}
+        json_out = {'ac_servers': ac_servers}
         if userdata:
             json_out['userdata'] = userdata
         if uid:
