@@ -133,7 +133,7 @@ class AuthorizationsClient(AccessControlClient):
 
         json_out = {'objperm': obj_perm,
                     'objtype': obj_type,
-                    'objuid': str(obj_uid),
+                    'objuid': str(obj_uid) if obj_uid else "",
                     'userdata': userdata}
 
         res = self._ac_connection.http_post(ep, json=json_out)
