@@ -25,10 +25,10 @@ from . import base
 
 ### Constants ###
 
-TYPE_SRV_COL = "server-collection"
-TYPE_COL = "collection"
-
+TYPE_SRV = "server"
 PERM_SRV_COL_CREATE = "srv-col-create"
+
+TYPE_COL = "collection"
 PERM_COL_CREATE = "col-create"
 PERM_COL_READ = "col-read"
 
@@ -89,7 +89,7 @@ class CollectionsClient(StorageClient):
 
     @property
     def objtype(self):
-        return TYPE_SRV_COL
+        return TYPE_SRV
 
     @property
     def objperm_create(self):
