@@ -238,6 +238,7 @@ def store_secret(sec_data, sec_uid = None, col_uid=None,
             raise Exception("No valid secret creation tokens")
 
     # Create Secret
+    # Todo: shard
     for sec_client in sec_clients:
         uid = sec_client.create(tokens, col_uid, sec_data, uid=sec_uid)
         assert(uid == sec_uid)
@@ -250,3 +251,69 @@ def store_secret(sec_data, sec_uid = None, col_uid=None,
 
     ## Return ##
     return sec_uid, col_uid
+
+def fetch_secret(sec_uid, col_uid,
+                 conf=None, conf_path=None,
+                 ac_server_names=None, storage_server_names=None,
+                 account_uid=None, client_uid=None):
+
+    ## Arg Defaults ##
+    if not ac_server_names:
+        ac_server_names = [None]
+    if not storage_server_names:
+        storage_server_names = [None]
+
+    ## Setup Server Connections ##
+    acs = []
+    for name in ac_server_names:
+        ac = accesscontrol.ACServerConnection(ac_server_name=name,
+                                              conf=conf, conf_path=conf_path,
+                                              account_uid=account_uid, client_uid=client_uid)
+        ac.open()
+        acs.append(ac)
+
+    sss = []
+    for name in storage_server_names:
+        ss = storage.StorageServerConnection(storage_server_name=name,
+                                             conf=conf, conf_path=conf_path)
+        ss.open()
+        sss.append(ss)
+
+    ## Setup API Clients ##
+    ath_clients = []
+    for ac in acs:
+        ath_clients.append(accesscontrol.AuthorizationsClient(ac))
+
+    sec_clients = []
+    for ss in sss:
+        sec_clients.append(storage.SecretsClient(ss))
+
+    ## Fetch Secret ##
+
+    # Get Collection Create Authorizations
+    objtype = storage.TYPE_COL
+    objuid = col_uid
+    objperm = storage.PERM_COL_READ
+    tokens = []
+    for ath_client in ath_clients:
+        authz_uid = ath_client.request(objtype, objuid, objperm)
+        authz_tok = ath_client.wait_token(authz_uid)
+        if authz_tok:
+            tokens.append(authz_tok)
+    if not tokens:
+            raise Exception("No valid secret creation tokens")
+
+    # Create Secret
+    # Todo: unshard
+    for sec_client in sec_clients:
+        sec = sec_client.fetch(tokens, col_uid, sec_uid)
+        sec_data = sec['data']
+
+    ## Close Connections ##
+    for ac in acs:
+        ac.close()
+    for ss in sss:
+        ss.close()
+
+    ## Return ##
+    return sec_data
