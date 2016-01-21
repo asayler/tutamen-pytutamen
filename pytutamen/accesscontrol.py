@@ -169,7 +169,7 @@ class AuthorizationsClient(AccessControlClient):
 
 class VerifiersClient(AccessControlClient):
 
-    def create(self, uid=None, accounts=None, authenticators=None userdata=None):
+    def create(self, uid=None, accounts=None, authenticators=None, userdata=None):
 
         if uid:
             if not isinstance(uid, uuid.UUID):
