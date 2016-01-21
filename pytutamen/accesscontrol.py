@@ -43,6 +43,10 @@ _VAL_AUTHORIZATIONS_STATUS_PENDING = 'pending'
 _VAL_AUTHORIZATIONS_STATUS_GRANTED = 'approved'
 
 
+_EP_VERIFIERS = "verifiers"
+_KEY_VERIFIERS = "verifiers"
+
+
 ### Exceptions ###
 
 class ACServerConnectionException(base.ServerConnectionException):
@@ -162,3 +166,42 @@ class AuthorizationsClient(AccessControlClient):
             return auth[_KEY_AUTHORIZATIONS_TOKEN]
         else:
             return None
+
+class VerifiersClient(AccessControlClient):
+
+    def create(self, uid=None, accounts=None, authenticators=None userdata=None):
+
+        if uid:
+            if not isinstance(uid, uuid.UUID):
+                raise TypeError("uid must be uuid.UUID")
+        if not accounts:
+            accounts = []
+        if not authenticators:
+            authenticators = []
+        if userdata is None:
+            userdata = {}
+
+        ep = "{}".format(_EP_VERIFIERS)
+
+        json_out = {}
+        if uid:
+            json_out['uid'] = str(uid)
+        if accounts:
+            json_out['accounts'] = accounts
+        if authenticators:
+            json_out['authenticators'] = accounts
+        if userdata:
+            json_out['userdata'] = userdata
+
+        res = self._ac_connection.http_post(ep, json=json_out)
+        return uuid.UUID(res[_KEY_VERIFIERS][0])
+
+    def fetch(self, uid):
+
+        if not isinstance(uid, uuid.UUID):
+            raise TypeError("uid must be uuid.UUID")
+
+        ep = "{}/{}/".format(_KEY_VERIFIERS, str(uid))
+
+        verifier = self._ac_connection.http_get(ep)
+        return verifier
