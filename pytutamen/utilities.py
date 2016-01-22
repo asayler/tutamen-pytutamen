@@ -404,4 +404,4 @@ def fetch_secret(sec_uid, col_uid,
         ss.close()
 
     ## Return ##
-    return sec_data
+    return str(sec_data)

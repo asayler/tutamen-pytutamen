@@ -15,6 +15,7 @@ from __future__ import division
 from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
+from future.utils import native_str
 from builtins import *
 
 import uuid
@@ -133,7 +134,7 @@ class SecretsClient(StorageClient):
             raise TypeError("tokens must be list")
         if not isinstance(col_uid, uuid.UUID):
             raise TypeError("col_uid must be uuid")
-        if not isinstance(data, str):
+        if not (isinstance(data, str) or isinstance(data, native_str)):
             raise TypeError("data must be string")
 
         ep = "{}/{}/{}".format(_KEY_COL, str(col_uid), _KEY_COL_SEC)

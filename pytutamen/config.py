@@ -65,7 +65,8 @@ class ClientConfig(object):
 
         conf_path = os.path.expanduser(conf_path)
         conf_path = os.path.normpath(conf_path)
-        os.makedirs(conf_path, exist_ok=True)
+        if not os.path.exists(conf_path):
+            os.makedirs(conf_path)
 
         self._path = conf_path
 
@@ -75,10 +76,12 @@ class ClientConfig(object):
         if os.path.isfile(conf_path):
             conf_obj.read(conf_path)
 
-        conf_obj[section] = conf
+        for key, val in conf:
+            conf_obj.set(section, key, val)
 
         conf_dir = os.path.dirname(conf_path)
-        os.makedirs(conf_dir, exist_ok=True)
+        if not os.path.exists(conf_path):
+            os.makedirs(conf_path)
         with open(conf_path, 'w') as conf_file:
             conf_obj.write(conf_file)
 
@@ -88,17 +91,18 @@ class ClientConfig(object):
         if os.path.isfile(conf_path):
             conf_obj.read(conf_path)
 
-        if section not in conf_obj:
+        if section not in conf_obj.sections():
             return {}
 
-        conf = conf_obj[section]
+        conf = dict(conf_obj.items(section))
 
         return conf
 
     def _write_file(self, file_path, data, mode=None):
 
         file_dir = os.path.dirname(file_path)
-        os.makedirs(file_dir, exist_ok=True)
+        if not os.path.exists(file_dir):
+            os.makedirs(file_dir)
         with open(file_path, 'w') as f:
             if mode:
                 os.fchmod(f.fileno(), mode)
