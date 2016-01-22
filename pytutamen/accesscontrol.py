@@ -42,9 +42,11 @@ _KEY_AUTHORIZATIONS_TOKEN = "token"
 _VAL_AUTHORIZATIONS_STATUS_PENDING = 'pending'
 _VAL_AUTHORIZATIONS_STATUS_GRANTED = 'approved'
 
-
 _EP_VERIFIERS = "verifiers"
 _KEY_VERIFIERS = "verifiers"
+
+_EP_PERMISSIONS = "permissions"
+_KEY_PERMISSIONS = "permissions"
 
 
 ### Exceptions ###
@@ -205,3 +207,47 @@ class VerifiersClient(AccessControlClient):
 
         verifier = self._ac_connection.http_get(ep)
         return verifier
+
+class PermissionsClient(AccessControlClient):
+
+    def create(self, objtype, objuid=None,
+               v_create=None, v_read=None,
+               v_modify=None, v_delete=None,
+               v_ac=None, v_default=None):
+
+
+        v_default_str = []
+        for v in v_default:
+            v_default_str.append(str(v))
+
+        ep = "{}".format(_EP_PERMISSIONS)
+
+        json_out = {'objtype': objtype}
+        if objuid:
+            json_out['objuid'] = str(objuid)
+        if v_create:
+            json_out['create'] = v_create
+        if v_read:
+            json_out['read'] = v_read
+        if v_modify:
+            json_out['modify'] = v_modify
+        if v_delete:
+            json_out['delete'] = v_delete
+        if v_ac:
+            json_out['ac'] = v_ac
+        if v_default:
+            json_out['default'] = v_default_str
+
+        res = self._ac_connection.http_post(ep, json=json_out)
+        res = res[_KEY_PERMISSIONS][0]
+        assert(objtype == res['objtype'])
+        if objuid:
+            assert(objuid == uuid.UUID(res['objuid']))
+        return objtype, objuid
+
+    def fetch(self, objtype, objuid):
+
+        ep = "{}/{}/{}/".format(_EP_PERMISSIONS, objtype, str(objuid))
+
+        perms = self._ac_connection.http_get(ep)
+        return perms
