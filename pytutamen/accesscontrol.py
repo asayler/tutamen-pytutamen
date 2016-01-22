@@ -178,8 +178,12 @@ class VerifiersClient(AccessControlClient):
                 raise TypeError("uid must be uuid.UUID")
         if not accounts:
             accounts = []
+        else:
+            accounts = [str(a) for a in accounts]
         if not authenticators:
             authenticators = []
+        else:
+            authenticators = [str(a) for a in authenticators]
         if userdata is None:
             userdata = {}
 
@@ -215,10 +219,18 @@ class PermissionsClient(AccessControlClient):
                v_modify=None, v_delete=None,
                v_ac=None, v_default=None):
 
-
-        v_default_str = []
-        for v in v_default:
-            v_default_str.append(str(v))
+        if v_create:
+            v_create = [str(v) for v in v_create]
+        if v_read:
+            v_read = [str(v) for v in v_read]
+        if v_modify:
+            v_modify = [str(v) for v in v_modify]
+        if v_delete:
+            v_delete = [str(v) for v in v_delete]
+        if v_ac:
+            v_ac = [str(v) for v in v_ac]
+        if v_default:
+            v_default = [str(v) for v in v_default]
 
         ep = "{}".format(_EP_PERMISSIONS)
 
@@ -236,7 +248,7 @@ class PermissionsClient(AccessControlClient):
         if v_ac:
             json_out['ac'] = v_ac
         if v_default:
-            json_out['default'] = v_default_str
+            json_out['default'] = v_default
 
         res = self._ac_connection.http_post(ep, json=json_out)
         res = res[_KEY_PERMISSIONS][0]
