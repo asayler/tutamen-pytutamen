@@ -165,6 +165,8 @@ def setup_collection(col_uid=None,
                      account_uid=None, client_uid=None):
 
     ## Arg Defaults ##
+    if not conf:
+        conf = config.ClientConfig(conf_path=conf_path)
     if not ac_server_names:
         ac_server_names = [None]
     if not storage_server_names:
