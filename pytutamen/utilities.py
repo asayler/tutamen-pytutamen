@@ -157,7 +157,110 @@ def setup_new_account(ac_server_name=None, cn=None,
     assert client_uid == ret_client_uid
     return account_uid, client_uid, client_crt
 
-def store_secret(sec_data, sec_uid = None, col_uid=None,
+def setup_collection(col_uid=None,
+                     verifiers=None, verifier_uid=None,
+                     accounts=None, authenticators=None,
+                     conf=None, conf_path=None,
+                     ac_server_names=None, storage_server_names=None,
+                     account_uid=None, client_uid=None):
+
+    ## Arg Defaults ##
+    if not ac_server_names:
+        ac_server_names = [None]
+    if not storage_server_names:
+        storage_server_names = [None]
+    if not account_uid:
+        account_uid = conf.defaults_get_account_uid()
+        if not account_uid:
+            raise(ValueError("Missing Default Account UID"))
+
+    ## Setup Server Connections ##
+    acs = []
+    for name in ac_server_names:
+        ac = accesscontrol.ACServerConnection(ac_server_name=name,
+                                              conf=conf, conf_path=conf_path,
+                                              account_uid=account_uid, client_uid=client_uid)
+        ac.open()
+        acs.append(ac)
+
+    sss = []
+    for name in storage_server_names:
+        ss = storage.StorageServerConnection(storage_server_name=name,
+                                             conf=conf, conf_path=conf_path)
+        ss.open()
+        sss.append(ss)
+
+    ## Setup API Clients ##
+    ath_clients = []
+    verifier_clients = []
+    permission_clients = []
+    for ac in acs:
+        ath_clients.append(accesscontrol.AuthorizationsClient(ac))
+        verifier_clients.append(accesscontrol.VerifiersClient(ac))
+        permission_clients.append(accesscontrol.PermissionsClient(ac))
+
+    col_clients = []
+    for ss in sss:
+        col_clients.append(storage.CollectionsClient(ss))
+
+    ## Setup Verifier ##
+    if not verifiers:
+
+        if not verifier_uid:
+            verifier_uid = uuid.uuid4()
+        if not accounts:
+            accounts = [account_uid]
+        if not authenticators:
+            authenticators = []
+
+        for client in verifier_clients:
+            uid = client.create(uid=verifier_uid, accounts=accounts,
+                                authenticators=authenticators)
+            assert(uid == verifier_uid)
+
+        verifiers = [verifier_uid]
+
+    ## Setup Collection ##
+    if not col_uid:
+        col_uid = uuid.uuid4()
+
+    # Setup Collection Perms
+    for client in permission_clients:
+        client.create("collection", objuid=col_uid, v_default=verifiers)
+
+    # Get Server Collection Create Authorizations
+    objtype = storage.TYPE_SRV
+    objuid = None
+    objperm = storage.PERM_SRV_COL_CREATE
+    tokens = []
+    for client in ath_clients:
+        authz_uid = client.request(objtype, objuid, objperm)
+        authz_tok = client.wait_token(authz_uid)
+        if authz_tok:
+            tokens.append(authz_tok)
+    if not tokens:
+        raise Exception("No valid collection creation tokens")
+
+    # Create Collections
+    ac_servers = []
+    for ac in acs:
+        ac_servers.append(ac.url_srv)
+    for client in col_clients:
+        uid = client.create(tokens, ac_servers, uid=col_uid)
+        assert(uid == col_uid)
+
+    ## Close Connections ##
+    for ac in acs:
+        ac.close()
+    for ss in sss:
+        ss.close()
+
+    ## Return ##
+    return col_uid, verifiers
+
+def store_secret(sec_data, sec_uid=None, col_uid=None,
+                 verifiers=None, verifier_uid=None,
+                 accounts=None, authenticators=None,
                  conf=None, conf_path=None,
                  ac_server_names=None, storage_server_names=None,
                  account_uid=None, client_uid=None):
@@ -167,6 +270,15 @@ def store_secret(sec_data, sec_uid = None, col_uid=None,
         ac_server_names = [None]
     if not storage_server_names:
         storage_server_names = [None]
+
+    ## Setup Collection ##
+    if not col_uid:
+        col_uid, verifiers = setup_collection(verifiers=verifiers, verifier_uid=verifier_uid,
+                                              accounts=accounts, authenticators=authenticators,
+                                              conf=conf, conf_path=conf_path,
+                                              ac_server_names=ac_server_names,
+                                              storage_server_names=storage_server_names,
+                                              account_uid=account_uid, client_uid=client_uid)
 
     ## Setup Server Connections ##
     acs = []
@@ -189,38 +301,12 @@ def store_secret(sec_data, sec_uid = None, col_uid=None,
     for ac in acs:
         ath_clients.append(accesscontrol.AuthorizationsClient(ac))
 
-    col_clients = []
     sec_clients = []
     for ss in sss:
-        col_clients.append(storage.CollectionsClient(ss))
         sec_clients.append(storage.SecretsClient(ss))
 
-    ## Setup Collection ##
-    if not col_uid:
-        col_uid = uuid.uuid4()
-
-        # Get Server Collection Create Authorizations
-        objtype = storage.TYPE_SRV
-        objuid = None
-        objperm = storage.PERM_SRV_COL_CREATE
-        tokens = []
-        for ath_client in ath_clients:
-            authz_uid = ath_client.request(objtype, objuid, objperm)
-            authz_tok = ath_client.wait_token(authz_uid)
-            if authz_tok:
-                tokens.append(authz_tok)
-        if not tokens:
-            raise Exception("No valid collection creation tokens")
-
-        # Create Collections
-        ac_servers = []
-        for ac in acs:
-            ac_servers.append(ac.url_srv)
-        for col_client in col_clients:
-            uid = col_client.create(tokens, ac_servers, uid=col_uid)
-            assert(uid == col_uid)
-
     ## Setup Secret ##
+
     if not sec_uid:
         sec_uid = uuid.uuid4()
 
@@ -250,7 +336,7 @@ def store_secret(sec_data, sec_uid = None, col_uid=None,
         ss.close()
 
     ## Return ##
-    return sec_uid, col_uid
+    return sec_uid, col_uid, verifiers
 
 def fetch_secret(sec_uid, col_uid,
                  conf=None, conf_path=None,
