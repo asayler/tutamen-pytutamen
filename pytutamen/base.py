@@ -66,12 +66,12 @@ class ServerConnection(object):
         if not account_uid:
             account_uid = conf.defaults_get_account_uid()
             if not account_uid:
-                raise(ACServerConnectionException("Missing Account UID"))
+                raise(ACServerConnectionException("Missing Default Account UID"))
         self._account_uid = account_uid
         if not client_uid:
             client_uid = conf.defaults_get_client_uid()
             if not client_uid:
-                raise(ACServerConnectionException("Missing Client UID"))
+                raise(ACServerConnectionException("Missing Default Client UID"))
         self._client_uid = client_uid
 
         # Get Certs

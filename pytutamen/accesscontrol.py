@@ -201,7 +201,7 @@ class VerifiersClient(AccessControlClient):
         if not isinstance(uid, uuid.UUID):
             raise TypeError("uid must be uuid.UUID")
 
-        ep = "{}/{}/".format(_KEY_VERIFIERS, str(uid))
+        ep = "{}/{}/".format(_EP_VERIFIERS, str(uid))
 
         verifier = self._ac_connection.http_get(ep)
         return verifier
