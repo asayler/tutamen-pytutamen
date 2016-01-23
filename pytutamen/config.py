@@ -76,7 +76,7 @@ class ClientConfig(object):
         if os.path.isfile(conf_path):
             conf_obj.read(conf_path)
 
-        for key, val in conf:
+        for key, val in conf.items():
             conf_obj.set(section, key, val)
 
         conf_dir = os.path.dirname(conf_path)
