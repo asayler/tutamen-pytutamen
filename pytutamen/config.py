@@ -76,12 +76,15 @@ class ClientConfig(object):
         if os.path.isfile(conf_path):
             conf_obj.read(conf_path)
 
+        if not conf_obj.has_section(section):
+            conf_obj.add_section(section)
+
         for key, val in conf.items():
             conf_obj.set(section, key, val)
 
         conf_dir = os.path.dirname(conf_path)
-        if not os.path.exists(conf_path):
-            os.makedirs(conf_path)
+        if not os.path.exists(conf_dir):
+            os.makedirs(conf_dir)
         with open(conf_path, 'w') as conf_file:
             conf_obj.write(conf_file)
 
@@ -91,7 +94,7 @@ class ClientConfig(object):
         if os.path.isfile(conf_path):
             conf_obj.read(conf_path)
 
-        if section not in conf_obj.sections():
+        if not conf_obj.has_section(section):
             return {}
 
         conf = dict(conf_obj.items(section))
