@@ -231,9 +231,9 @@ def setup_collection(col_uid=None,
         client.create("collection", objuid=col_uid, v_default=verifiers)
 
     # Get Server Collection Create Authorizations
-    objtype = storage.TYPE_SRV
+    objtype = storage.TYPE_SRV_STORAGE
     objuid = None
-    objperm = storage.PERM_SRV_COL_CREATE
+    objperm = storage.PERM_CREATE
     tokens = []
     for client in ath_clients:
         authz_uid = client.request(objtype, objuid, objperm)
@@ -315,7 +315,7 @@ def store_secret(sec_data, sec_uid=None, col_uid=None,
     # Get Collection Create Authorizations
     objtype = storage.TYPE_COL
     objuid = col_uid
-    objperm = storage.PERM_COL_CREATE
+    objperm = storage.PERM_CREATE
     tokens = []
     for ath_client in ath_clients:
         authz_uid = ath_client.request(objtype, objuid, objperm)
@@ -381,7 +381,7 @@ def fetch_secret(sec_uid, col_uid,
     # Get Collection Create Authorizations
     objtype = storage.TYPE_COL
     objuid = col_uid
-    objperm = storage.PERM_COL_READ
+    objperm = storage.PERM_READ
     tokens = []
     for ath_client in ath_clients:
         authz_uid = ath_client.request(objtype, objuid, objperm)

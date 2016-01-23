@@ -26,12 +26,11 @@ from . import base
 
 ### Constants ###
 
-TYPE_SRV = "server"
-PERM_SRV_COL_CREATE = "srv-col-create"
-
+TYPE_SRV_STORAGE = "storageserver"
 TYPE_COL = "collection"
-PERM_COL_CREATE = "col-create"
-PERM_COL_READ = "col-read"
+
+PERM_CREATE = "create"
+PERM_READ = "read"
 
 _KEY_COL = "collections"
 _KEY_COL_SEC = "secrets"
@@ -90,11 +89,11 @@ class CollectionsClient(StorageClient):
 
     @property
     def objtype(self):
-        return TYPE_SRV
+        return TYPE_SRV_STORAGE
 
     @property
     def objperm_create(self):
-        return PERM_SRV_COL_CREATE
+        return PERM_CREATE
 
     def create(self, tokens, ac_servers, userdata=None, uid=None):
 
@@ -126,7 +125,7 @@ class SecretsClient(StorageClient):
 
     @property
     def objperm_create(self):
-        return PERM_COL_CREATE
+        return PERM_CREATE
 
     def create(self, tokens, col_uid, data, userdata=None, uid=None):
 
@@ -154,7 +153,7 @@ class SecretsClient(StorageClient):
 
     @property
     def objperm_fetch(self):
-        return PERM_COL_READ
+        return PERM_READ
 
     def fetch(self, tokens, col_uid, key_uid):
 
