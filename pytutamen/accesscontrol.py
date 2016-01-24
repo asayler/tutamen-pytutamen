@@ -146,7 +146,7 @@ class BootstrapClient(AccessControlClient):
 
 class AuthorizationsClient(AccessControlClient):
 
-    def request(self, obj_type, obj_uid, obj_perm, userdata=None):
+    def request(self, obj_type, obj_perm, obj_uid=None, userdata=None):
 
         if userdata is None:
             userdata = {}
@@ -161,27 +161,27 @@ class AuthorizationsClient(AccessControlClient):
         res = self._ac_connection.http_post(ep, json=json_out)
         return uuid.UUID(res[_KEY_AUTHORIZATIONS][0])
 
-    def fetch(self, auth_uid):
+    def fetch(self, authz_uid):
 
-        ep = "{}/{}/".format(_KEY_AUTHORIZATIONS, str(auth_uid))
+        ep = "{}/{}/".format(_KEY_AUTHORIZATIONS, str(authz_uid))
 
-        auth = self._ac_connection.http_get(ep)
-        return auth
+        authz = self._ac_connection.http_get(ep)
+        return authz
 
-    def wait_token(self, auth_uid, timeout=_DEFAULT_TIMEOUT):
+    def wait_token(self, authz_uid, timeout=_DEFAULT_TIMEOUT):
 
-        auth = self.fetch(auth_uid)
-        status = auth[_KEY_AUTHORIZATIONS_STATUS]
+        authz = self.fetch(authz_uid)
+        status = authz[_KEY_AUTHORIZATIONS_STATUS]
         cnt = 0
         while (status == _VAL_AUTHORIZATIONS_STATUS_PENDING):
             if (cnt * _WAIT_SLEEP) > timeout:
                 raise Exception("Timed out wating for token")
             time.sleep(_WAIT_SLEEP)
-            auth = self.fetch(auth_uid)
-            status = auth[_KEY_AUTHORIZATIONS_STATUS]
+            authz = self.fetch(authz_uid)
+            status = authz[_KEY_AUTHORIZATIONS_STATUS]
             cnt += 1
         if (status == _VAL_AUTHORIZATIONS_STATUS_GRANTED):
-            return auth[_KEY_AUTHORIZATIONS_TOKEN]
+            return authz[_KEY_AUTHORIZATIONS_TOKEN]
         else:
             return None
 
