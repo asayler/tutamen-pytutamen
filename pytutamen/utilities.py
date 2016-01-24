@@ -151,251 +151,341 @@ def bootstrap_new_account(country=None, state=None, locality=None, email=None,
     assert client_uid == ret_client_uid
     return account_uid, client_uid, client_crt
 
-def setup_collection(col_uid=None,
-                     verifiers=None, verifier_uid=None,
-                     accounts=None, authenticators=None,
+
+### Helper Functions ###
+
+def prep_connections(connection_type,
+                     clients=None,
+                     server_names=None,
                      conf=None, conf_path=None,
-                     ac_server_names=None, storage_server_names=None,
                      account_uid=None, client_uid=None):
+
+    ## Arg Defaults ##
+    if not server_names:
+        server_names = [None]
+
+    ## Setup Connections ##
+    if clients:
+        connections = [client.connection for client in clients]
+    else:
+        connections = []
+        for server_name in server_names:
+            connections.append(connection_type(server_name=server_name,
+                                               conf=conf, conf_path=conf_path,
+                                               account_uid=account_uid, client_uid=client_uid))
+    return connections
+
+def prep_clients(client_type, connections):
+
+    ## Setup Clients ##
+    clients = []
+    for connection in connections:
+        clients.append(client_type(connection))
+    return clients
+
+def open_connections(connections):
+    opened = []
+    for connection in connections:
+        if not connection.is_open:
+            connection.open()
+            opened.append(connection)
+    return opened
+
+def close_connections(opened):
+    for connection in opened:
+        connection.close()
+
+
+### Token Functions ###
+
+def get_tokens(objtype, objperm, objuid=None,
+               ac_connections=None, ac_server_names=None,
+               conf=None, conf_path=None,
+               account_uid=None, client_uid=None):
+
+    ## Setup Connections ##
+    if not ac_connections:
+        ac_connections = prep_connections(accesscontrol.ACServerConnection,
+                                          server_names=ac_server_names,
+                                          conf=conf, conf_path=conf_path,
+                                          account_uid=account_uid, client_uid=client_uid)
+
+    ## Setup Clients ##
+    authz_clients = prep_clients(accesscontrol.AuthorizationsClient, ac_connections)
+
+    ## Open Connections ##
+    ac_opened = open_connections(ac_connections)
+
+    ## Get tokens ##
+    tokens = []
+    errors = []
+    for authz_client in authz_clients:
+        uid = authz_client.request(objtype, objperm, objuid)
+        try:
+            tok = authz_client.wait_token(uid)
+        except accesscontrol.AuthorizationException as err:
+            errors.append(err)
+        else:
+            tokens.append(tok)
+
+    ## Close Connections ##
+    close_connections(ac_opened)
+
+    ## Return ##
+    return tokens, errors
+
+
+### Verifier Functions ###
+
+def setup_verifiers(verifier_uid=None, accounts=None, authenticators=None, tokens=None,
+                    ac_connections=None, ac_server_names=None,
+                    conf=None, conf_path=None,
+                    account_uid=None, client_uid=None):
 
     ## Arg Defaults ##
     if not conf:
         conf = config.ClientConfig(conf_path=conf_path)
-    if not ac_server_names:
-        ac_server_names = [None]
-    if not storage_server_names:
-        storage_server_names = [None]
     if not account_uid:
         account_uid = conf.defaults_get_account_uid()
         if not account_uid:
             raise(ValueError("Missing Default Account UID"))
 
-    ## Setup Server Connections ##
-    acs = []
-    for name in ac_server_names:
-        ac = accesscontrol.ACServerConnection(ac_server_name=name,
-                                              conf=conf, conf_path=conf_path,
-                                              account_uid=account_uid, client_uid=client_uid)
-        ac.open()
-        acs.append(ac)
+    ## Setup Connections ##
+    if not ac_connections:
+        ac_connections = prep_connections(accesscontrol.ACServerConnection,
+                                          server_names=ac_server_names,
+                                          conf=conf, conf_path=conf_path,
+                                          account_uid=account_uid, client_uid=client_uid)
 
-    sss = []
-    for name in storage_server_names:
-        ss = storage.StorageServerConnection(storage_server_name=name,
-                                             conf=conf, conf_path=conf_path)
-        ss.open()
-        sss.append(ss)
+    ## Setup Clients ##
+    verifier_clients = prep_clients(accesscontrol.VerifiersClient, ac_connections)
 
-    ## Setup API Clients ##
-    ath_clients = []
-    verifier_clients = []
-    permission_clients = []
-    for ac in acs:
-        ath_clients.append(accesscontrol.AuthorizationsClient(ac))
-        verifier_clients.append(accesscontrol.VerifiersClient(ac))
-        permission_clients.append(accesscontrol.PermissionsClient(ac))
+    ## Open Connections ##
+    ac_opened = open_connections(ac_connections)
 
-    col_clients = []
-    for ss in sss:
-        col_clients.append(storage.CollectionsClient(ss))
+    ## Setup Tokens ##
+    if not tokens:
+        tokens, errors = get_tokens(constants.TYPE_SRV_AC, constants.PERM_CREATE,
+                                    ac_connections=ac_connections)
 
-    ## Setup Verifier ##
+    ## Setup Verifiers ##
+    if not verifier_uid:
+        verifier_uid = uuid.uuid4()
+    if not accounts:
+        accounts = [account_uid]
+    if not authenticators:
+        authenticators = []
+    for client in verifier_clients:
+        uid = client.create(tokens, uid=verifier_uid,
+                            accounts=accounts, authenticators=authenticators)
+        assert(uid == verifier_uid)
+
+    ## Close Connections ##
+    close_connections(ac_opened)
+
+    ## Return ##
+    return [verifier_uid]
+
+
+### Permissions Functions ###
+
+def setup_permissions(objtype, objuid=None, tokens=None,
+                      verifiers=None,
+                      ac_connections=None, ac_server_names=None,
+                      conf=None, conf_path=None,
+                      account_uid=None, client_uid=None):
+
+    ## Setup Connections ##
+    if not ac_connections:
+        ac_connections = prep_connections(accesscontrol.ACServerConnection,
+                                          server_names=ac_server_names,
+                                          conf=conf, conf_path=conf_path,
+                                          account_uid=account_uid, client_uid=client_uid)
+
+    ## Setup Clients ##
+    permissions_clients = prep_clients(accesscontrol.PermissionsClient, ac_connections)
+
+    ## Open Connections ##
+    ac_opened = open_connections(ac_connections)
+
+    ## Setup Verifiers ##
     if not verifiers:
+        verifiers = setup_verifiers(ac_connections=ac_connections)
 
-        if not verifier_uid:
-            verifier_uid = uuid.uuid4()
-        if not accounts:
-            accounts = [account_uid]
-        if not authenticators:
-            authenticators = []
+    ## Setup Tokens ##
+    if not tokens:
+        tokens, errors = get_tokens(constants.TYPE_SRV_AC, constants.PERM_CREATE,
+                                    ac_connections=ac_connections)
 
-        for client in verifier_clients:
-            uid = client.create(uid=verifier_uid, accounts=accounts,
-                                authenticators=authenticators)
-            assert(uid == verifier_uid)
+    ## Setup Permissions ##
+    for client in permissions_clients:
+        outtype, outuid = client.create(tokens, objtype, objuid=objuid, v_default=verifiers)
 
-        verifiers = [verifier_uid]
+    ## Close Connections ##
+    close_connections(ac_opened)
+
+    ## Return ##
+    return verifiers
+
+
+### Collection Functions ###
+
+def setup_collection(col_uid=None, ac_server_urls=None, tokens=None,
+                     verifiers=None,
+                     storage_connections=None, storage_server_names=None,
+                     ac_connections=None, ac_server_names=None,
+                     conf=None, conf_path=None,
+                     account_uid=None, client_uid=None):
+
+    ## Setup Connections ##
+    if not storage_connections:
+        storage_connections = prep_connections(storage.StorageServerConnection,
+                                               server_names=storage_server_names,
+                                               conf=conf, conf_path=conf_path,
+                                               account_uid=account_uid, client_uid=client_uid)
+    if not ac_connections:
+        ac_connections = prep_connections(accesscontrol.ACServerConnection,
+                                          server_names=ac_server_names,
+                                          conf=conf, conf_path=conf_path,
+                                          account_uid=account_uid, client_uid=client_uid)
+
+    ## Setup Clients ##
+    collection_clients = prep_clients(storage.CollectionsClient, storage_connections)
+
+    ## Open Connections ##
+    storage_opened = open_connections(storage_connections)
+    ac_opened = open_connections(ac_connections)
 
     ## Setup Collection ##
+
+    # Setup UID
     if not col_uid:
         col_uid = uuid.uuid4()
 
-    # Setup Collection Perms
-    for client in permission_clients:
-        client.create("collection", objuid=col_uid, v_default=verifiers)
+    # Setup URLS
+    ac_server_urls = []
+    for ac_connection in ac_connections:
+        ac_server_urls.append(ac_connection.url_srv)
 
-    # Get Server Collection Create Authorizations
-    objtype = storage.TYPE_SRV_STORAGE
-    objuid = None
-    objperm = storage.PERM_CREATE
-    tokens = []
-    for client in ath_clients:
-        authz_uid = client.request(objtype, objuid, objperm)
-        authz_tok = client.wait_token(authz_uid)
-        if authz_tok:
-            tokens.append(authz_tok)
+    # Setup Permissions
+    verifiers = setup_permissions(constants.TYPE_COL, objuid=col_uid, verifiers=verifiers,
+                                  ac_connections=ac_connections)
+
+    # Get Storage Server Create Tokens
     if not tokens:
-        raise Exception("No valid collection creation tokens")
+        tokens, errors = get_tokens(constants.TYPE_SRV_STORAGE, constants.PERM_CREATE,
+                                    ac_connections=ac_connections)
 
     # Create Collections
-    ac_servers = []
-    for ac in acs:
-        ac_servers.append(ac.url_srv)
-    for client in col_clients:
-        uid = client.create(tokens, ac_servers, uid=col_uid)
+    for client in collection_clients:
+        uid = client.create(tokens, ac_server_urls, uid=col_uid)
         assert(uid == col_uid)
 
     ## Close Connections ##
-    for ac in acs:
-        ac.close()
-    for ss in sss:
-        ss.close()
 
     ## Return ##
     return col_uid, verifiers
 
-def store_secret(sec_data, sec_uid=None, col_uid=None,
-                 verifiers=None, verifier_uid=None,
-                 accounts=None, authenticators=None,
+
+### Secret Functions ###
+
+def store_secret(sec_data, sec_uid=None, tokens=None,
+                 col_uid=None, verifiers=None,
+                 storage_connections=None, storage_server_names=None,
+                 ac_connections=None, ac_server_names=None,
                  conf=None, conf_path=None,
-                 ac_server_names=None, storage_server_names=None,
                  account_uid=None, client_uid=None):
 
-    ## Arg Defaults ##
-    if not ac_server_names:
-        ac_server_names = [None]
-    if not storage_server_names:
-        storage_server_names = [None]
+    ## Setup Connections ##
+    if not storage_connections:
+        storage_connections = prep_connections(storage.StorageServerConnection,
+                                               server_names=storage_server_names,
+                                               conf=conf, conf_path=conf_path,
+                                               account_uid=account_uid, client_uid=client_uid)
+    if not ac_connections:
+        ac_connections = prep_connections(accesscontrol.ACServerConnection,
+                                          server_names=ac_server_names,
+                                          conf=conf, conf_path=conf_path,
+                                          account_uid=account_uid, client_uid=client_uid)
 
-    ## Setup Collection ##
-    if not col_uid:
-        col_uid, verifiers = setup_collection(verifiers=verifiers, verifier_uid=verifier_uid,
-                                              accounts=accounts, authenticators=authenticators,
-                                              conf=conf, conf_path=conf_path,
-                                              ac_server_names=ac_server_names,
-                                              storage_server_names=storage_server_names,
-                                              account_uid=account_uid, client_uid=client_uid)
+    ## Setup Clients ##
+    secret_clients = prep_clients(storage.SecretsClient, storage_connections)
 
-    ## Setup Server Connections ##
-    acs = []
-    for name in ac_server_names:
-        ac = accesscontrol.ACServerConnection(ac_server_name=name,
-                                              conf=conf, conf_path=conf_path,
-                                              account_uid=account_uid, client_uid=client_uid)
-        ac.open()
-        acs.append(ac)
-
-    sss = []
-    for name in storage_server_names:
-        ss = storage.StorageServerConnection(storage_server_name=name,
-                                             conf=conf, conf_path=conf_path)
-        ss.open()
-        sss.append(ss)
-
-    ## Setup API Clients ##
-    ath_clients = []
-    for ac in acs:
-        ath_clients.append(accesscontrol.AuthorizationsClient(ac))
-
-    sec_clients = []
-    for ss in sss:
-        sec_clients.append(storage.SecretsClient(ss))
+    ## Open Connections ##
+    storage_opened = open_connections(storage_connections)
+    ac_opened = open_connections(ac_connections)
 
     ## Setup Secret ##
 
+    # Setup UID
     if not sec_uid:
         sec_uid = uuid.uuid4()
 
-    # Get Collection Create Authorizations
-    objtype = storage.TYPE_COL
-    objuid = col_uid
-    objperm = storage.PERM_CREATE
-    tokens = []
-    for ath_client in ath_clients:
-        authz_uid = ath_client.request(objtype, objuid, objperm)
-        authz_tok = ath_client.wait_token(authz_uid)
-        if authz_tok:
-            tokens.append(authz_tok)
+    # Setup Collection
+    if not col_uid:
+        col_uid, verifiers = setup_collection(verifiers=verifiers,
+                                              storage_connections=storage_connections,
+                                              ac_connections=ac_connections)
+
+    # Get Collection Create Tokens
     if not tokens:
-            raise Exception("No valid secret creation tokens")
+        tokens, errors = get_tokens(constants.TYPE_COL, constants.PERM_CREATE, objuid=col_uid,
+                                    ac_connections=ac_connections)
 
     # Create Secret
     # Todo: shard
-    for sec_client in sec_clients:
-        uid = sec_client.create(tokens, col_uid, sec_data, uid=sec_uid)
+    for client in secret_clients:
+        uid = client.create(tokens, col_uid, sec_data, uid=sec_uid)
         assert(uid == sec_uid)
 
     ## Close Connections ##
-    for ac in acs:
-        ac.close()
-    for ss in sss:
-        ss.close()
+    close_connections(storage_opened)
+    close_connections(ac_opened)
 
     ## Return ##
     return sec_uid, col_uid, verifiers
 
-def fetch_secret(sec_uid, col_uid,
+def fetch_secret(sec_uid, col_uid, tokens=None,
+                 storage_connections=None, storage_server_names=None,
+                 ac_connections=None, ac_server_names=None,
                  conf=None, conf_path=None,
-                 ac_server_names=None, storage_server_names=None,
                  account_uid=None, client_uid=None):
 
-    ## Arg Defaults ##
-    if not ac_server_names:
-        ac_server_names = [None]
-    if not storage_server_names:
-        storage_server_names = [None]
+    ## Setup Connections ##
+    if not storage_connections:
+        storage_connections = prep_connections(storage.StorageServerConnection,
+                                               server_names=storage_server_names,
+                                               conf=conf, conf_path=conf_path,
+                                               account_uid=account_uid, client_uid=client_uid)
+    if not ac_connections:
+        ac_connections = prep_connections(accesscontrol.ACServerConnection,
+                                          server_names=ac_server_names,
+                                          conf=conf, conf_path=conf_path,
+                                          account_uid=account_uid, client_uid=client_uid)
 
-    ## Setup Server Connections ##
-    acs = []
-    for name in ac_server_names:
-        ac = accesscontrol.ACServerConnection(ac_server_name=name,
-                                              conf=conf, conf_path=conf_path,
-                                              account_uid=account_uid, client_uid=client_uid)
-        ac.open()
-        acs.append(ac)
+    ## Setup Clients ##
+    secret_clients = prep_clients(storage.SecretsClient, storage_connections)
 
-    sss = []
-    for name in storage_server_names:
-        ss = storage.StorageServerConnection(storage_server_name=name,
-                                             conf=conf, conf_path=conf_path)
-        ss.open()
-        sss.append(ss)
-
-    ## Setup API Clients ##
-    ath_clients = []
-    for ac in acs:
-        ath_clients.append(accesscontrol.AuthorizationsClient(ac))
-
-    sec_clients = []
-    for ss in sss:
-        sec_clients.append(storage.SecretsClient(ss))
+    ## Open Connections ##
+    storage_opened = open_connections(storage_connections)
+    ac_opened = open_connections(ac_connections)
 
     ## Fetch Secret ##
 
-    # Get Collection Create Authorizations
-    objtype = storage.TYPE_COL
-    objuid = col_uid
-    objperm = storage.PERM_READ
-    tokens = []
-    for ath_client in ath_clients:
-        authz_uid = ath_client.request(objtype, objuid, objperm)
-        authz_tok = ath_client.wait_token(authz_uid)
-        if authz_tok:
-            tokens.append(authz_tok)
+    # Get Collection read Tokens
     if not tokens:
-            raise Exception("No valid secret creation tokens")
+        tokens, errors = get_tokens(constants.TYPE_COL, constants.PERM_READ, objuid=col_uid,
+                                    ac_connections=ac_connections)
 
-    # Create Secret
+    # Read Secret
     # Todo: unshard
-    for sec_client in sec_clients:
-        sec = sec_client.fetch(tokens, col_uid, sec_uid)
+    for client in secret_clients:
+        sec = client.fetch(tokens, col_uid, sec_uid)
         sec_data = sec['data']
 
     ## Close Connections ##
-    for ac in acs:
-        ac.close()
-    for ss in sss:
-        ss.close()
+    close_connections(storage_opened)
+    close_connections(ac_opened)
 
     ## Return ##
     return str(sec_data)
