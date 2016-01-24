@@ -213,7 +213,7 @@ class VerifiersClient(AccessControlClient):
         if accounts:
             json_out['accounts'] = accounts
         if authenticators:
-            json_out['authenticators'] = accounts
+            json_out['authenticators'] = authenticators
         if userdata:
             json_out['userdata'] = userdata
 
