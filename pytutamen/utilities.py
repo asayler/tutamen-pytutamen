@@ -32,9 +32,10 @@ _DEFAULT_COUNTRY = 'US'
 _DEFAULT_STATE = 'Colorado'
 _DEFAULT_LOCALITY = 'Boulder'
 
-### Functions ###
 
-def setup_new_ac_server(name, url, conf=None, conf_path=None):
+### Config Functions ###
+
+def config_new_ac_server(name, url, conf=None, conf_path=None):
 
     # Setup Conf
     if not conf:
@@ -53,7 +54,7 @@ def setup_new_ac_server(name, url, conf=None, conf_path=None):
     if not conf.defaults_get_ac_server():
         conf.defaults_set_ac_server(name)
 
-def setup_new_storage_server(name, url, conf=None, conf_path=None):
+def config_new_storage_server(name, url, conf=None, conf_path=None):
 
     # Setup Conf
     if not conf:
