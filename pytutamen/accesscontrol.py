@@ -182,8 +182,10 @@ class AuthorizationsClient(AccessControlClient):
             cnt += 1
         if (status == _VAL_AUTHORIZATIONS_STATUS_GRANTED):
             return authz[_KEY_AUTHORIZATIONS_TOKEN]
+        elif (status == _VAL_AUTHORIZATIONS_STATUS_DENIED):
+            raise AuthorizationDenied(authz_uid, status)
         else:
-            return None
+            raise AuthorizationFailed(authz_uid, status)
 
 class VerifiersClient(AccessControlClient):
 
