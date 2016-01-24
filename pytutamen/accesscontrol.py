@@ -232,7 +232,7 @@ class VerifiersClient(AccessControlClient):
 
 class PermissionsClient(AccessControlClient):
 
-    def create(self, objtype, objuid=None,
+    def create(self, tokens, objtype, objuid=None,
                v_create=None, v_read=None,
                v_modify=None, v_delete=None,
                v_ac=None, v_default=None):
@@ -268,16 +268,16 @@ class PermissionsClient(AccessControlClient):
         if v_default:
             json_out['default'] = v_default
 
-        res = self._ac_connection.http_post(ep, json=json_out)
+        res = self._ac_connection.http_post(ep, json=json_out, tokens=tokens)
         res = res[_KEY_PERMISSIONS][0]
         assert(objtype == res['objtype'])
         if objuid:
             assert(objuid == uuid.UUID(res['objuid']))
         return objtype, objuid
 
-    def fetch(self, objtype, objuid):
+    def fetch(self, tokens, objtype, objuid):
 
         ep = "{}/{}/{}/".format(_EP_PERMISSIONS, objtype, str(objuid))
 
-        perms = self._ac_connection.http_get(ep)
+        perms = self._ac_connection.http_get(ep, tokens=tokens)
         return perms
