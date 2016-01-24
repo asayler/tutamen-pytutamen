@@ -270,10 +270,12 @@ class PermissionsClient(AccessControlClient):
 
         res = self._ac_connection.http_post(ep, json=json_out, tokens=tokens)
         res = res[_KEY_PERMISSIONS][0]
-        assert(objtype == res['objtype'])
+        outtype = res['objtype']
+        outuid = uuid.UUID(res['objuid'])
+        assert(objtype == outtype)
         if objuid:
-            assert(objuid == uuid.UUID(res['objuid']))
-        return objtype, objuid
+            assert(objuid == outuid)
+        return outtype, outuid
 
     def fetch(self, tokens, objtype, objuid):
 
