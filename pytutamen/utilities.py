@@ -21,18 +21,16 @@ import uuid
 
 from . import config
 from . import crypto
+from . import constants
 from . import accesscontrol
 from . import storage
 
 
 ### Constants ###
 
-_DEFAULT_CN = 'new_client_cert'
 _DEFAULT_COUNTRY = 'US'
 _DEFAULT_STATE = 'Colorado'
 _DEFAULT_LOCALITY = 'Boulder'
-_DEFAULT_ORGANIZATION = 'libtutamen_client'
-_DEFAULT_OU = 'libtutamen_client_crt'
 
 ### Functions ###
 
@@ -74,27 +72,22 @@ def setup_new_storage_server(name, url, conf=None, conf_path=None):
     if not conf.defaults_get_storage_server():
         conf.defaults_set_storage_server(name)
 
-def setup_new_account(ac_server_name=None, cn=None,
-                      country=None, state=None, locality=None,
-                      organization=None, ou=None,
-                      email=None,
-                      account_userdata=None, account_uid=None,
-                      client_userdata=None, client_uid=None,
-                      conf=None, conf_path=None):
+
+### Bootstrap Functions ###
+
+def bootstrap_new_account(country=None, state=None, locality=None, email=None,
+                          account_userdata=None, account_uid=None,
+                          client_userdata=None, client_uid=None,
+                          ac_server_name=None,
+                          conf=None, conf_path=None):
 
     # Normalize Args
-    if not cn:
-        cn = _DEFAULT_CN
     if not country:
         country = _DEFAULT_COUNTRY
     if not state:
         state = _DEFAULT_STATE
     if not locality:
         locality = _DEFAULT_LOCALITY
-    if not organization:
-        organization = _DEFAULT_ORGANIZATION
-    if not ou:
-        ou = _DEFAULT_OU
 
     # Setup Conf
     if not conf:
@@ -133,7 +126,7 @@ def setup_new_account(ac_server_name=None, cn=None,
         conf.client_set_key(account_uid, client_uid, key_pem)
 
     # Generate and Save CSR
-    csr_pem = crypto.gen_csr(key_pem, cn, country, state, locality, organization, ou, email)
+    csr_pem = crypto.gen_csr(key_pem, country, state, locality, email)
     conf.client_set_csr(account_uid, client_uid, ac_server_name, csr_pem)
 
     # Bootstrap Account and Save CRT
