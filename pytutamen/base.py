@@ -30,9 +30,13 @@ _API_VERSION = 'v1'
 _TOKENS_DELIMINATOR = ':'
 _TOKENS_HEADER = 'tutamen-tokens'
 
+
 ### Exceptions ###
 
 class ServerConnectionException(Exception):
+    pass
+
+class ClientException(Exception):
     pass
 
 
@@ -56,6 +60,7 @@ class ServerConnection(object):
         # Setup Properties
         self._url_server = server_url
         self._path_ca = server_ca_crt_path
+        self._session = None
 
         # Setup Conf
         if not conf:
@@ -92,18 +97,20 @@ class ServerConnection(object):
             self._client_crt_path = None
 
     def open(self):
-        ses = requests.Session()
-        if self._path_ca:
-            ses.verify = self._path_ca
-        else:
-            ses.verify = True
-        if self._client_crt_path and self._client_key_path:
-            ses.cert = (self._client_crt_path, self._client_key_path)
-        self._session = ses
+        if not self._session:
+            ses = requests.Session()
+            if self._path_ca:
+                ses.verify = self._path_ca
+            else:
+                ses.verify = True
+            if self._client_crt_path and self._client_key_path:
+                ses.cert = (self._client_crt_path, self._client_key_path)
+            self._session = ses
 
     def close(self):
-        self._session.close()
-        del(self._session)
+        if self._session:
+            self._session.close()
+            self._session = None
 
     def __enter__(self):
         self.open()
@@ -112,6 +119,10 @@ class ServerConnection(object):
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
         return False
+
+    @property
+    def is_open(self):
+        return bool(self._session)
 
     @property
     def url_srv(self):
@@ -176,3 +187,7 @@ class ObjectClient(object):
 
         # Setup Properties
         self._connection = connection
+
+    @property
+    def connection(self):
+        return self._connection
