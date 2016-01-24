@@ -41,25 +41,25 @@ class StorageServerConnectionException(base.ServerConnectionException):
 
 class StorageServerConnection(base.ServerConnection):
 
-    def __init__(self, storage_server_name=None, conf=None, conf_path=None, **kwargs):
+    def __init__(self, server_name=None, conf=None, conf_path=None, **kwargs):
 
         # Setup Conf
         if not conf:
             conf = config.ClientConfig(conf_path=conf_path)
 
         # Get Storage Server Name
-        if not storage_server_name:
-            storage_server_name = conf.defaults_get_storage_server()
-            if not storage_server_name:
+        if not server_name:
+            server_name = conf.defaults_get_storage_server()
+            if not server_name:
                 raise(StorageServerConnectionException("Missing Storage Server Name"))
 
         # Get Storage Server URL
-        storage_server_url = conf.storage_server_get_url(storage_server_name)
-        if not storage_server_url:
+        server_url = conf.storage_server_get_url(server_name)
+        if not server_url:
             raise(StorageServerConnectionException("Missing Storage Server URL"))
 
         # Call Parent
-        super().__init__(server_url=storage_server_url, server_name=storage_server_name,
+        super().__init__(server_url=server_url, server_name=server_name,
                          conf=conf, conf_path=conf_path, no_client_crt=True, **kwargs)
 
 

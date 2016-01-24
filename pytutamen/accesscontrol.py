@@ -59,25 +59,25 @@ class ACServerConnectionException(base.ServerConnectionException):
 
 class ACServerConnection(base.ServerConnection):
 
-    def __init__(self, ac_server_name=None, conf=None, conf_path=None, **kwargs):
+    def __init__(self, server_name=None, conf=None, conf_path=None, **kwargs):
 
         # Setup Conf
         if not conf:
             conf = config.ClientConfig(conf_path=conf_path)
 
         # Get Server Name
-        if not ac_server_name:
-            ac_server_name = conf.defaults_get_ac_server()
-            if not ac_server_name:
+        if not server_name:
+            server_name = conf.defaults_get_ac_server()
+            if not server_name:
                 raise(ACServerConnectionException("Missing AC Server Name"))
 
         # Get Server URL
-        ac_server_url = conf.ac_server_get_url(ac_server_name)
-        if not ac_server_url:
+        server_url = conf.ac_server_get_url(server_name)
+        if not server_url:
             raise(ACServerConnectionException("Missing AC Server URL"))
 
         # Call Parent
-        super().__init__(server_url=ac_server_url, server_name=ac_server_name,
+        super().__init__(server_url=server_url, server_name=server_name,
                          conf=conf, conf_path=conf_path, **kwargs)
 
 ### Client Objects ###
