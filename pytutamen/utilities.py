@@ -131,7 +131,7 @@ def bootstrap_new_account(country=None, state=None, locality=None, email=None,
     conf.client_set_csr(account_uid, client_uid, ac_server_name, csr_pem)
 
     # Bootstrap Account and Save CRT
-    ac_connection = accesscontrol.ACServerConnection(ac_server_name=ac_server_name,
+    ac_connection = accesscontrol.ACServerConnection(server_name=ac_server_name,
                                                      account_uid=account_uid,
                                                      client_uid=client_uid,
                                                      no_client_crt=True,
