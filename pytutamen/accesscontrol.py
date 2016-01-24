@@ -189,7 +189,7 @@ class AuthorizationsClient(AccessControlClient):
 
 class VerifiersClient(AccessControlClient):
 
-    def create(self, uid=None, accounts=None, authenticators=None, userdata=None):
+    def create(self, tokens, uid=None, accounts=None, authenticators=None, userdata=None):
 
         if uid:
             if not isinstance(uid, uuid.UUID):
@@ -217,17 +217,17 @@ class VerifiersClient(AccessControlClient):
         if userdata:
             json_out['userdata'] = userdata
 
-        res = self._ac_connection.http_post(ep, json=json_out)
+        res = self._ac_connection.http_post(ep, json=json_out, tokens=tokens)
         return uuid.UUID(res[_KEY_VERIFIERS][0])
 
-    def fetch(self, uid):
+    def fetch(self, tokens, uid):
 
         if not isinstance(uid, uuid.UUID):
             raise TypeError("uid must be uuid.UUID")
 
         ep = "{}/{}/".format(_EP_VERIFIERS, str(uid))
 
-        verifier = self._ac_connection.http_get(ep)
+        verifier = self._ac_connection.http_get(ep, tokens=tokens)
         return verifier
 
 class PermissionsClient(AccessControlClient):
