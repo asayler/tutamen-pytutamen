@@ -21,16 +21,11 @@ from builtins import *
 import uuid
 
 from . import config
+from . import constants
 from . import base
 
 
 ### Constants ###
-
-TYPE_SRV_STORAGE = "storageserver"
-TYPE_COL = "collection"
-
-PERM_CREATE = "create"
-PERM_READ = "read"
 
 _KEY_COL = "collections"
 _KEY_COL_SEC = "secrets"
@@ -89,11 +84,11 @@ class CollectionsClient(StorageClient):
 
     @property
     def objtype(self):
-        return TYPE_SRV_STORAGE
+        return constants.TYPE_SRV_STORAGE
 
     @property
     def objperm_create(self):
-        return PERM_CREATE
+        return constants.PERM_CREATE
 
     def create(self, tokens, ac_servers, userdata=None, uid=None):
 
@@ -121,11 +116,11 @@ class SecretsClient(StorageClient):
 
     @property
     def objtype(self):
-        return TYPE_COL
+        return constants.TYPE_COL
 
     @property
     def objperm_create(self):
-        return PERM_CREATE
+        return constants.PERM_CREATE
 
     def create(self, tokens, col_uid, data, userdata=None, uid=None):
 
@@ -153,7 +148,7 @@ class SecretsClient(StorageClient):
 
     @property
     def objperm_fetch(self):
-        return PERM_READ
+        return constants.PERM_READ
 
     def fetch(self, tokens, col_uid, key_uid):
 
