@@ -55,8 +55,7 @@ def gen_key(length=4096, pub_exp=65537, typ=TYPE_RSA, password=None):
 
     return key_pem
 
-def gen_csr(key_pem, cn, country, state, locality, organization, ou,
-            email=None, password=None):
+def gen_csr(key_pem, country, state, locality, email=None, password=None):
 
     # Check Args
     if len(country) != 2:
@@ -65,12 +64,9 @@ def gen_csr(key_pem, cn, country, state, locality, organization, ou,
     be = default_backend()
 
     sub_attr = []
-    sub_attr.append(x509.NameAttribute(x509.NameOID.COMMON_NAME, cn))
     sub_attr.append(x509.NameAttribute(x509.NameOID.COUNTRY_NAME, country))
     sub_attr.append(x509.NameAttribute(x509.NameOID.STATE_OR_PROVINCE_NAME, state))
     sub_attr.append(x509.NameAttribute(x509.NameOID.LOCALITY_NAME, locality))
-    sub_attr.append(x509.NameAttribute(x509.NameOID.ORGANIZATION_NAME, organization))
-    sub_attr.append(x509.NameAttribute(x509.NameOID.ORGANIZATIONAL_UNIT_NAME, ou))
     if email:
         sub_attr.append(x509.NameAttribute(x509.NameOID.EMAIL_ADDRESS, email))
 
