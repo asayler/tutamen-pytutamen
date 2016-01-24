@@ -41,6 +41,7 @@ _KEY_AUTHORIZATIONS_STATUS = "status"
 _KEY_AUTHORIZATIONS_TOKEN = "token"
 _VAL_AUTHORIZATIONS_STATUS_PENDING = 'pending'
 _VAL_AUTHORIZATIONS_STATUS_GRANTED = 'approved'
+_VAL_AUTHORIZATIONS_STATUS_DENIED = 'denied'
 
 _EP_VERIFIERS = "verifiers"
 _KEY_VERIFIERS = "verifiers"
@@ -53,6 +54,21 @@ _KEY_PERMISSIONS = "permissions"
 
 class ACServerConnectionException(base.ServerConnectionException):
     pass
+
+class AuthorizationException(base.ClientException):
+    pass
+
+class AuthorizationDenied(AuthorizationException):
+
+    def __init__(self, uid, status):
+        msg = "Authorization '{}' denied: {}".format(uid, status)
+        super().__init__(msg)
+
+class AuthorizationFailed(AuthorizationException):
+
+    def __init__(self, uid, status):
+        msg = "Authorization '{}' failed: {}".format(uid, status)
+        super().__init__(msg)
 
 
 ### Connection Objects ###
