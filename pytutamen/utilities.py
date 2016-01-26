@@ -277,7 +277,9 @@ def setup_verifiers(verifier_uid=None, accounts=None, authenticators=None, token
     if not authenticators:
         authenticators = []
     for client in verifier_clients:
-        uid = client.create(tokens, uid=verifier_uid,
+        srv_name = client.ac_connection.server_name
+        token = tokens[srv_name]
+        uid = client.create([token], uid=verifier_uid,
                             accounts=accounts, authenticators=authenticators)
         assert(uid == verifier_uid)
 
