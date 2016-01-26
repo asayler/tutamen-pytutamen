@@ -466,7 +466,8 @@ def setup_collection(col_uid=None, ac_server_urls=None, tokens=None,
 
     # Create Collections
     for client in collection_clients:
-        uid = client.create(tokens, ac_server_urls, uid=col_uid)
+        token_list = list(tokens.values())
+        uid = client.create(token_list, ac_server_urls, uid=col_uid)
         assert(uid == col_uid)
 
     ## Close Connections ##
@@ -523,7 +524,8 @@ def store_secret(sec_data, sec_uid=None, tokens=None,
     # Create Secret
     # Todo: shard
     for client in secret_clients:
-        uid = client.create(tokens, col_uid, sec_data, uid=sec_uid)
+        token_list = list(tokens.values())
+        uid = client.create(token_list, col_uid, sec_data, uid=sec_uid)
         assert(uid == sec_uid)
 
     ## Close Connections ##
@@ -568,7 +570,8 @@ def fetch_secret(sec_uid, col_uid, tokens=None,
     # Read Secret
     # Todo: unshard
     for client in secret_clients:
-        sec = client.fetch(tokens, col_uid, sec_uid)
+        token_list = list(tokens.values())
+        sec = client.fetch(token_list, col_uid, sec_uid)
         sec_data = sec['data']
 
     ## Close Connections ##
