@@ -217,16 +217,17 @@ def get_tokens(objtype, objperm, objuid=None,
     ac_opened = open_connections(ac_connections)
 
     ## Get tokens ##
-    tokens = []
-    errors = []
+    tokens = {}
+    errors = {}
     for authz_client in authz_clients:
+        srv_name = authz_client.ac_connection.server_name
         uid = authz_client.request(objtype, objperm, objuid)
         try:
             tok = authz_client.wait_token(uid)
         except accesscontrol.AuthorizationException as err:
-            errors.append(err)
+            errors[srv_name] = err
         else:
-            tokens.append(tok)
+            tokens[srv_name] = tok
 
     ## Close Connections ##
     close_connections(ac_opened)
