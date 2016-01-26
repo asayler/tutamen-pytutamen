@@ -112,6 +112,10 @@ class AccessControlClient(object):
         # Setup Properties
         self._ac_connection = ac_connection
 
+    @property
+    def ac_connection(self):
+        return self._ac_connection
+
 class BootstrapClient(AccessControlClient):
 
     def account(self, account_userdata=None, account_uid=None,

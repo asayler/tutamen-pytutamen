@@ -59,6 +59,7 @@ class ServerConnection(object):
 
         # Setup Properties
         self._url_server = server_url
+        self._server_name = server_name
         self._path_ca = server_ca_crt_path
         self._session = None
 
@@ -123,6 +124,10 @@ class ServerConnection(object):
     @property
     def is_open(self):
         return bool(self._session)
+
+    @property
+    def server_name(self):
+        return self._server_name
 
     @property
     def url_srv(self):
