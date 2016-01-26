@@ -361,7 +361,7 @@ def setup_permissions(objtype, objuid=None, tokens=None,
     if not verifiers:
         verifiers = setup_verifiers(ac_connections=ac_connections)
 
-    ## Setup Tokens ##
+    ## Get Permission Create Tokens ##
     if not tokens:
         tokens, errors = get_tokens(constants.TYPE_SRV_AC, constants.PERM_CREATE,
                                     ac_connections=ac_connections)
@@ -377,6 +377,43 @@ def setup_permissions(objtype, objuid=None, tokens=None,
 
     ## Return ##
     return verifiers
+
+def fetch_permissions(objtype, objuid=None, tokens=None,
+                      ac_connections=None, ac_server_names=None,
+                      conf=None, conf_path=None,
+                      account_uid=None, client_uid=None):
+
+    ## Setup Connections ##
+    if not ac_connections:
+        ac_connections = prep_connections(accesscontrol.ACServerConnection,
+                                          server_names=ac_server_names,
+                                          conf=conf, conf_path=conf_path,
+                                          account_uid=account_uid, client_uid=client_uid)
+
+    ## Setup Clients ##
+    permissions_clients = prep_clients(accesscontrol.PermissionsClient, ac_connections)
+
+    ## Open Connections ##
+    ac_opened = open_connections(ac_connections)
+
+    ## Get Permission Read Tokens ##
+    if not tokens:
+        tokens, errors = get_tokens(objtype, constants.PERM_PERMS, objuid=objuid,
+                                    ac_connections=ac_connections)
+
+    ## Setup Permissions ##
+    spermissions = {}
+    errors = {}
+    for client in permissions_clients:
+        srv_name = client.ac_connection.server_name
+        token = tokens[srv_name]
+        spermissions[srv_name] = client.fetch([token], objtype, objuid=objuid)
+
+    ## Close Connections ##
+    close_connections(ac_opened)
+
+    ## Return ##
+    return spermissions, errors
 
 
 ### Collection Functions ###

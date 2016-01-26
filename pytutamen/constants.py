@@ -29,3 +29,4 @@ TYPE_COL = "collection"
 
 PERM_CREATE = "create"
 PERM_READ = "read"
+PERM_PERMS = "perms"
