@@ -239,6 +239,7 @@ def get_tokens(objtype, objperm, objuid=None,
 ### Verifier Functions ###
 
 def setup_verifiers(verifier_uid=None, accounts=None, authenticators=None, tokens=None,
+                    verifiers=None,
                     ac_connections=None, ac_server_names=None,
                     conf=None, conf_path=None,
                     account_uid=None, client_uid=None):
@@ -250,6 +251,11 @@ def setup_verifiers(verifier_uid=None, accounts=None, authenticators=None, token
         account_uid = conf.defaults_get_account_uid()
         if not account_uid:
             raise(ValueError("Missing Default Account UID"))
+    if not verifier_uid:
+        verifier_uid = uuid.uuid4()
+    if not verifiers:
+        # Create self-referencing verifier
+        verifiers = [verifier_uid]
 
     ## Setup Connections ##
     if not ac_connections:
@@ -264,14 +270,16 @@ def setup_verifiers(verifier_uid=None, accounts=None, authenticators=None, token
     ## Open Connections ##
     ac_opened = open_connections(ac_connections)
 
-    ## Setup Tokens ##
+    # Setup Permissions
+    verifiers = setup_permissions(constants.TYPE_VERIFIER, objuid=verifier_uid,
+                                  verifiers=verifiers, ac_connections=ac_connections)
+
+    ## Get Verifier Create Tokens ##
     if not tokens:
         tokens, errors = get_tokens(constants.TYPE_SRV_AC, constants.PERM_CREATE,
                                     ac_connections=ac_connections)
 
     ## Setup Verifiers ##
-    if not verifier_uid:
-        verifier_uid = uuid.uuid4()
     if not accounts:
         accounts = [account_uid]
     if not authenticators:
@@ -288,6 +296,44 @@ def setup_verifiers(verifier_uid=None, accounts=None, authenticators=None, token
 
     ## Return ##
     return [verifier_uid]
+
+def fetch_verifiers(verifier_uid, tokens=None,
+                    ac_connections=None, ac_server_names=None,
+                    conf=None, conf_path=None,
+                    account_uid=None, client_uid=None):
+
+    ## Setup Connections ##
+    if not ac_connections:
+        ac_connections = prep_connections(accesscontrol.ACServerConnection,
+                                          server_names=ac_server_names,
+                                          conf=conf, conf_path=conf_path,
+                                          account_uid=account_uid, client_uid=client_uid)
+
+    ## Setup Clients ##
+    verifier_clients = prep_clients(accesscontrol.VerifiersClient, ac_connections)
+
+    ## Open Connections ##
+    ac_opened = open_connections(ac_connections)
+
+    ## Get Verifier Read Tokens ##
+    if not tokens:
+        tokens, errors = get_tokens(constants.TYPE_VERIFIER, constants.PERM_READ,
+                                    objuid=verifier_uid,
+                                    ac_connections=ac_connections)
+
+    ## Fetch Verifiers ##
+    verifiers = {}
+    errors = {}
+    for client in verifier_clients:
+        srv_name = client.ac_connection.server_name
+        token = tokens[srv_name]
+        verifiers[srv_name] = client.fetch([token], verifier_uid)
+
+    ## Close Connections ##
+    close_connections(ac_opened)
+
+    ## Return ##
+    return verifiers, errors
 
 
 ### Permissions Functions ###
@@ -322,7 +368,9 @@ def setup_permissions(objtype, objuid=None, tokens=None,
 
     ## Setup Permissions ##
     for client in permissions_clients:
-        outtype, outuid = client.create(tokens, objtype, objuid=objuid, v_default=verifiers)
+        srv_name = client.ac_connection.server_name
+        token = tokens[srv_name]
+        outtype, outuid = client.create([token], objtype, objuid=objuid, v_default=verifiers)
 
     ## Close Connections ##
     close_connections(ac_opened)
