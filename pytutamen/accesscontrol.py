@@ -43,6 +43,9 @@ _VAL_AUTHORIZATIONS_STATUS_PENDING = 'pending'
 _VAL_AUTHORIZATIONS_STATUS_GRANTED = 'approved'
 _VAL_AUTHORIZATIONS_STATUS_DENIED = 'denied'
 
+_EP_AUTHENTICATORS = "authenticators"
+_KEY_AUTHENTICATORS = "authenticators"
+
 _EP_VERIFIERS = "verifiers"
 _KEY_VERIFIERS = "verifiers"
 
@@ -190,6 +193,49 @@ class AuthorizationsClient(AccessControlClient):
             raise AuthorizationDenied(authz_uid, status)
         else:
             raise AuthorizationFailed(authz_uid, status)
+
+class AuthenticatorsClient(AccessControlClient):
+
+    def create(self, tokens, module_name, module_kwargs=None, uid=None, userdata=None):
+
+        if not isinstance(module_name, str):
+            raise TypeError("module_name must be a string")
+        if uid:
+            if not isinstance(uid, uuid.UUID):
+                raise TypeError("uid must be a uuid.UUID")
+        if module_kwargs is None:
+            module_kwargs = {}
+        else:
+            if not isinstance(module_kwargs, dict):
+                raise TypeError("module_kwargs must be a dict")
+        if userdata is None:
+            userdata = {}
+        else:
+            if not isinstance(userdata, dict):
+                raise TypeError("userdata must be a dict")
+
+        ep = "{}".format(_EP_AUTHENTICATORS)
+
+        json_out = {'module_name': module_name}
+        if uid:
+            json_out['uid'] = str(uid)
+        if module_kwargs:
+            json_out['module_kwargs'] = module_kwargs
+        if userdata:
+            json_out['userdata'] = userdata
+
+        res = self._ac_connection.http_post(ep, json=json_out, tokens=tokens)
+        return uuid.UUID(res[_KEY_AUTHENTICATORS][0])
+
+    def fetch(self, tokens, uid):
+
+        if not isinstance(uid, uuid.UUID):
+            raise TypeError("uid must be uuid.UUID")
+
+        ep = "{}/{}/".format(_EP_AUTHENTICATORS, str(uid))
+
+        authenticator = self._ac_connection.http_get(ep, tokens=tokens)
+        return authenticator
 
 class VerifiersClient(AccessControlClient):
 
