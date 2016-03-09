@@ -236,6 +236,103 @@ def get_tokens(objtype, objperm, objuid=None,
     return tokens, errors
 
 
+### Verifier Authenticator ###
+
+def setup_authenticators(module_name, module_kwargs=None,
+                         authn_uid=None, tokens=None,
+                         verifiers=None,
+                         ac_connections=None, ac_server_names=None,
+                         conf=None, conf_path=None,
+                         account_uid=None, client_uid=None):
+
+    ## Arg Defaults ##
+    if not conf:
+        conf = config.ClientConfig(conf_path=conf_path)
+    if not account_uid:
+        account_uid = conf.defaults_get_account_uid()
+        if not account_uid:
+            raise(ValueError("Missing Default Account UID"))
+    if not authn_uid:
+        authn_uid = uuid.uuid4()
+    if not module_kwargs:
+        module_kwargs = {}
+
+    ## Setup Connections ##
+    if not ac_connections:
+        ac_connections = prep_connections(accesscontrol.ACServerConnection,
+                                          server_names=ac_server_names,
+                                          conf=conf, conf_path=conf_path,
+                                          account_uid=account_uid, client_uid=client_uid)
+
+    ## Setup Clients ##
+    authn_clients = prep_clients(accesscontrol.AuthenticatorsClient, ac_connections)
+
+    ## Open Connections ##
+    ac_opened = open_connections(ac_connections)
+
+    # Setup Permissions
+    # TODO - bind authenticator to self-verifier
+    verifiers = setup_permissions(constants.TYPE_AUTHENTICATOR, objuid=authn_uid,
+                                  verifiers=verifiers, ac_connections=ac_connections)
+
+    ## Get Authenticator Create Tokens ##
+    if not tokens:
+        tokens, errors = get_tokens(constants.TYPE_SRV_AC, constants.PERM_CREATE,
+                                    ac_connections=ac_connections)
+
+    ## Setup Authenticators ##
+    for client in authn_clients:
+        srv_name = client.ac_connection.server_name
+        token = tokens[srv_name]
+        uid = client.create([token], module_name, module_kwargs=module_kwargs,
+                            uid=authn_uid)
+        assert(uid == authn_uid)
+
+    ## Close Connections ##
+    close_connections(ac_opened)
+
+    ## Return ##
+    return [authn_uid]
+
+def fetch_authenticators(authn_uid, tokens=None,
+                         ac_connections=None, ac_server_names=None,
+                         conf=None, conf_path=None,
+                         account_uid=None, client_uid=None):
+
+    ## Setup Connections ##
+    if not ac_connections:
+        ac_connections = prep_connections(accesscontrol.ACServerConnection,
+                                          server_names=ac_server_names,
+                                          conf=conf, conf_path=conf_path,
+                                          account_uid=account_uid, client_uid=client_uid)
+
+    ## Setup Clients ##
+    authn_clients = prep_clients(accesscontrol.AuthenticatorsClient, ac_connections)
+
+    ## Open Connections ##
+    ac_opened = open_connections(ac_connections)
+
+    ## Get Verifier Read Tokens ##
+    if not tokens:
+        tokens, errors = get_tokens(constants.TYPE_AUTHENTICATOR, constants.PERM_READ,
+                                    objuid=authn_uid,
+                                    ac_connections=ac_connections)
+
+    ## Fetch Authenticators ##
+    authenticators = {}
+    errors = {}
+    for client in authn_clients:
+        srv_name = client.ac_connection.server_name
+        token = tokens[srv_name]
+        authenticators[srv_name] = client.fetch([token], authn_uid)
+
+    ## Close Connections ##
+    close_connections(ac_opened)
+
+    ## Return ##
+    return authenticators, errors
+
+
 ### Verifier Functions ###
 
 def setup_verifiers(verifier_uid=None, accounts=None, authenticators=None, tokens=None,

@@ -23,6 +23,7 @@ from builtins import *
 
 TYPE_SRV_AC = "acserver"
 TYPE_VERIFIER = "verifier"
+TYPE_AUTHENTICATOR = "authenticator"
 
 TYPE_SRV_STORAGE = "storageserver"
 TYPE_COL = "collection"
