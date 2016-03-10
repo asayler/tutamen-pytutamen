@@ -238,7 +238,8 @@ def get_tokens(objtype, objperm, objuid=None,
 
 ### Verifier Authenticator ###
 
-def setup_authenticators(module_name, module_kwargs=None,
+def setup_authenticators(module_name, module_kwargs=None,\
+                         authn_userdata=None,
                          authn_uid=None, tokens=None,
                          verifiers=None,
                          ac_connections=None, ac_server_names=None,
@@ -285,7 +286,7 @@ def setup_authenticators(module_name, module_kwargs=None,
         srv_name = client.ac_connection.server_name
         token = tokens[srv_name]
         uid = client.create([token], module_name, module_kwargs=module_kwargs,
-                            uid=authn_uid)
+                            userdata=authn_userdata, uid=authn_uid)
         assert(uid == authn_uid)
 
     ## Close Connections ##
