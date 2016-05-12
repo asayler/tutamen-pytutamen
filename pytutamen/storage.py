@@ -33,7 +33,7 @@ _KEY_COL_SEC = "secrets"
 
 ### Exceptions ###
 
-class StorageServerConnectionException(base.ServerConnectionException):
+class SSConnectionException(base.ServerConnectionException):
     pass
 
 
@@ -51,12 +51,12 @@ class StorageServerConnection(base.ServerConnection):
         if not server_name:
             server_name = conf.defaults_get_storage_server()
             if not server_name:
-                raise(StorageServerConnectionException("Missing Storage Server Name"))
+                raise(SSConnectionException("Missing Storage Server Name"))
 
         # Get Storage Server URL
         server_url = conf.storage_server_get_url(server_name)
         if not server_url:
-            raise(StorageServerConnectionException("Missing Storage Server URL"))
+            raise(SSConnectionException("Missing '{}' Storage Server URL".format(server_name)))
 
         # Call Parent
         super().__init__(server_url=server_url, server_name=server_name,

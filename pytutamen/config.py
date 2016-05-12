@@ -161,26 +161,30 @@ class ClientConfig(object):
 
     ## DEFAULTS ##
 
-    def defaults_get_ac_server(self):
+    def defaults_get_ac_servers(self):
 
         conf = self._conf_get_section(self.path_core_conf, _SEC_DEFAULTS)
-        return conf.get(_KEY_ACSRV, None)
+        vals = conf.get(_KEY_ACSRV, None)
+        return vals.split() if vals else []
 
-    def defaults_set_ac_server(self, name):
+    def defaults_set_ac_servers(self, names):
 
         conf = self._conf_get_section(self.path_core_conf, _SEC_DEFAULTS)
-        conf[_KEY_ACSRV] = name
+        vals = " ".join(names) if names else ""
+        conf[_KEY_ACSRV] = vals
         self._conf_set_section(self.path_core_conf, _SEC_DEFAULTS, conf)
 
-    def defaults_get_storage_server(self):
+    def defaults_get_storage_servers(self):
 
         conf = self._conf_get_section(self.path_core_conf, _SEC_DEFAULTS)
-        return conf.get(_KEY_STORAGESRV, None)
+        vals = conf.get(_KEY_STORAGESRV, None)
+        return vals.split() if vals else []
 
-    def defaults_set_storage_server(self, name):
+    def defaults_set_storage_servers(self, names):
 
         conf = self._conf_get_section(self.path_core_conf, _SEC_DEFAULTS)
-        conf[_KEY_STORAGESRV] = name
+        vals = " ".join(names) if names else ""
+        conf[_KEY_STORAGESRV] = vals
         self._conf_set_section(self.path_core_conf, _SEC_DEFAULTS, conf)
 
     def defaults_get_account_uid(self):
