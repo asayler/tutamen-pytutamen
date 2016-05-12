@@ -4,3 +4,4 @@ six>=1.10.0,<=1.10.99
 urllib3[secure]>=1.0,<=1.99
 pyopenssl>=0.15.0,<=0.15.99
 cryptography>=1.0,<=1.99
+git+https://github.com/blockstack/secret-sharing#egg=secretsharing>=0.2,<1

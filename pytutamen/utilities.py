@@ -619,11 +619,16 @@ def store_secret(sec_data, sec_uid=None, tokens=None,
         tokens, errors = get_tokens(constants.TYPE_COL, constants.PERM_CREATE, objuid=col_uid,
                                     ac_connections=ac_connections)
 
+    # Shard Secret
+    if len(secret_clients) > 1:
+        shards = crypto.split_secret(sec_data, len(secret_clients))
+    else:
+        shards = [sec_data]
+
     # Create Secret
-    # Todo: shard
-    for client in secret_clients:
+    for client, shard in zip(secret_clients, shards):
         token_list = list(tokens.values())
-        uid = client.create(token_list, col_uid, sec_data, uid=sec_uid)
+        uid = client.create(token_list, col_uid, shard, uid=sec_uid)
         assert(uid == sec_uid)
 
     ## Close Connections ##
@@ -665,12 +670,18 @@ def fetch_secret(sec_uid, col_uid, tokens=None,
         tokens, errors = get_tokens(constants.TYPE_COL, constants.PERM_READ, objuid=col_uid,
                                     ac_connections=ac_connections)
 
-    # Read Secret
-    # Todo: unshard
+    # Read Shards
+    shards = []
     for client in secret_clients:
         token_list = list(tokens.values())
         sec = client.fetch(token_list, col_uid, sec_uid)
-        sec_data = sec['data']
+        shards.append(sec['data'])
+
+    # Combine Shards
+    if len(shards) > 1:
+        sec_data = crypto.join_secret(shards)
+    else:
+        sec_data = shards[0]
 
     ## Close Connections ##
     close_connections(storage_opened)

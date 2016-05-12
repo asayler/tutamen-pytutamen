@@ -23,6 +23,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
+from secretsharing import PlaintextToHexSecretSharer
 
 ### Constants ###
 
@@ -79,3 +80,12 @@ def gen_csr(key_pem, country, state, locality, email=None, password=None):
     csr_pem = csr.public_bytes(serialization.Encoding.PEM).decode()
 
     return csr_pem
+
+def split_secret(sec, required, spare=0):
+
+    cnt = required + spare
+    return PlaintextToHexSecretSharer.split_secret(sec, required, cnt)
+
+def join_secret(shares):
+
+    return PlaintextToHexSecretSharer.recover_secret(shares)
